@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,minimum-scale=1" />
+        <title>Login</title>
+        <!-- the form awesome library is used to add icons to our form -->
+        <link
+            rel="stylesheet"
+            href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+        />
+        <!-- include the stylesheet file -->
+        <link href="/css/style.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="login-background-image"></div>
+        <div class="login-page">
+            <h1 id="title">Login</h1>
+            <div id="loginContainer">
+                <form id="loginForm" action="/login" method="post">
+                    <label for="email">
+                        <!-- font awesome icon -->
+                        <i class="fas fa-user"></i>
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        id="email"
+                        required
+                    /><br />
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                    </label>
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        id="password"
+                        required
+                    /><br />
+                    <input type="submit" class="dos-button" value="Login" />
+                </form>
+            </div>
+
+            <div id="registerContainer" style="display: none">
+                <form
+                    id="registerForm"
+                    class="register-form"
+                    action="/register"
+                    method="post"
+                >
+                    <label for="reg_email">
+                        <!-- font awesome icon -->
+                        <i class="fas fa-user"></i>
+                    </label>
+                    <input
+                        type="email"
+                        name="reg_email"
+                        placeholder="Email"
+                        id="reg_email"
+                        required
+                    /><br />
+                    <label for="reg_password">
+                        <i class="fas fa-lock"></i>
+                    </label>
+                    <input
+                        type="password"
+                        name="reg_password"
+                        placeholder="Password"
+                        id="reg_password"
+                        required
+                    /><br />
+                    <input
+                    type="password"
+                    name="reg_password2"
+                    placeholder="Password"
+                    id="reg_password2"
+                    required
+                /><br />
+                    <input type="submit" class="dos-button" value="Register" />
+                </form>
+            </div>
+            <button id="toggleBtn" class="dos-button">
+                Switch to Register
+            </button>
+        </div>
+    </body>
+</html>
+
+<script src="custom.js"></script>
+
+<script>
+    const loginForm = document.getElementById("loginContainer");
+    const registerForm = document.getElementById("registerContainer");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const title = document.getElementById("title");
+    registerForm.style = "display:none";
+
+    toggleBtn.addEventListener("click", function () {
+        if (loginForm.style.display === "none") {
+            // Show login form and hide register form
+            loginForm.style.display = "flex";
+            registerForm.style.display = "none";
+            toggleBtn.textContent = "Switch to Register";
+            title.innerHTML = "Login";
+        } else {
+            // Show register form and hide login form
+            loginForm.style.display = "none";
+            registerForm.style.display = "flex";
+            toggleBtn.textContent = "Switch to Login";
+            title.innerHTML = "Register";
+        }
+    });
+</script>

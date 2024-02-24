@@ -1,0 +1,306 @@
+@import url(https://fonts.googleapis.com/css?family=VT323);
+
+:root {
+    --main-color: #09ce9e;
+    --sec-color: #ff2b5e;
+    --bg-color: black;
+    --text-color: #ffef0d;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "VT323", monospace;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+}
+
+.login-background-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("/img/wirbrauchendich.png"); /* Replace 'background-image.png' with the actual filename of your background image */
+    background-size: cover;
+    background-position: center;
+    z-index: -1; /* Ensure the background image is behind other content */
+}
+
+/* Target all labels and set their text color */
+label {
+    color: var(
+        --text-color
+    ) !important; /* Replace "your-desired-color" with the color you want */
+    font-size: 24px;
+}
+
+/* Target other text elements and set their text color */
+p,
+span,
+div,
+h1,
+h2,
+h3,
+h4 {
+    color: var(
+        --text-color
+    ) !important; /* Replace "your-desired-color" with the color you want */
+    font-size: 22px;
+}
+
+.login-page {
+    /* Your existing styles for login-page */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-page > div {
+    display: block; /* Ensure forms are displayed on separate lines */
+    margin-bottom: 20px; /* Add some space between forms */
+}
+
+.login-page form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Your existing styles for forms */
+}
+
+.login h1 {
+    color: var(--main-color);
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.login form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login form label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    background-color: var(--main-color);
+    color: #ffffff;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.login form input[type="email"],
+.login form input[type="password"] {
+    width: calc(100% - 70px);
+    height: 50px;
+    border: 1px solid var(--sec-color);
+    margin-bottom: 20px;
+    padding: 0 15px;
+    font-size: 16px;
+}
+
+.login form input[type="submit"] {
+    width: calc(100% - 70px);
+    height: 50px;
+    background-color: var(--main-color);
+    border: none;
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 16px;
+    text-transform: uppercase;
+}
+
+.login form input[type="submit"]:hover {
+    background-color: var(--sec-color);
+}
+
+.dos-button {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: var(--bg-color);
+    border: 2px solid var(--main-color);
+    font-family: "VT323", monospace;
+    font-size: 30px;
+    color: var(--main-color);
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.dos-button:hover {
+    color: var(--sec-color); /* Change the text color on hover */
+    border: 2px solid var(--sec-color);
+}
+
+.dos-button::before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--main-color);
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+}
+
+/* Custom select styling */
+select {
+    background-color: var(--bg-color);
+    border-color: var(--main-color);
+    border-width: 2px !important;
+    color: var(--sec-color);
+    font-family: "VT323", monospace;
+    font-size: 30px;
+    width: 80%;
+    text-align: left;
+    /* margin-left: 2vw; */
+    padding-left: 2vw;
+    appearance: none; /* Remove default styling */
+    -moz-appearance: none; /* Remove default styling for Firefox */
+    -webkit-appearance: none; /* Remove default styling for Webkit browsers */
+    cursor: pointer;
+}
+
+/* Custom arrow for select dropdown */
+select::after {
+    content: "▼"; /* Unicode character for arrow */
+    position: absolute;
+    top: 50%;
+    right: 2vw;
+    transform: translateY(-50%);
+    pointer-events: none; /* Ensure the arrow doesn't interfere with clicking the select */
+}
+
+.alert {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    display: inline-block;
+    background-color: var(--bg-color);
+    border: 2px solid var(--main-color);
+    font-family: "VT323", monospace;
+    font-size: 24px;
+    color: var(--main-color);
+    top: 25vh;
+    width: 70vw;
+    left: 15vw;
+    text-align: center;
+    position: absolute;
+    max-height: 70vh;
+    overflow: auto;
+    /* Custom Scrollbar Styles */
+    scrollbar-color: var(--main-color) var(--bg-color); /* thumb color, track color */
+    z-index: 99; /* Increase the z-index to place the content above pseudo-element */
+    touch-action: pan-y; /* Enable vertical scrolling with touch interactions */
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--main-color);
+}
+
+label {
+    text-transform: uppercase;
+}
+input {
+    background-color: var(--bg-color);
+    border-color: var(--main-color);
+    border-width: 2px !important;
+    color: var(--sec-color);
+    font-family: "VT323", monospace;
+    font-size: 30px;
+    width: 80%;
+    text-align: left;
+    /* margin-left: 2vw; */
+    /* padding-left: 2vw; */
+}
+
+/* Media query for desktop screens with a maximum width of, for example, 1024px */
+@media (min-width: 768px) {
+    input,
+    table,
+    select {
+        max-width: 500px; /* Adjust the maximum width as needed */
+    }
+}
+
+input[type="radio"] {
+    display: none; /* Hide the default radio button */
+}
+
+/* Style the custom radio button */
+input[type="radio"] + label::before {
+    content: ""; /* Create a pseudo-element for the custom radio button */
+    display: inline-block;
+    width: 15px; /* Customize the width of the circle */
+    height: 15px; /* Customize the height of the circle */
+    border: 3px solid var(--main-color); /* Customize the border color of the circle */
+    border-radius: 50%; /* Make it a circle by using border-radius */
+    background-color: transparent; /* Customize the background color of the circle */
+    margin-right: 10px; /* Add spacing between the circle and label text */
+    cursor: pointer;
+    /* margin-left: 2vw; */
+}
+
+/* Style the custom radio button when it's selected */
+input[type="radio"]:checked + label::before {
+    background-color: var(
+        --sec-color
+    ); /* Change the background color when selected */
+}
+
+input[type="radio"]:checked + label {
+    font-weight: bold; /* Change the font weight when selected */
+    color: var(--sec-color) !important;
+}
+
+/* Style the disabled radio label (optional) */
+input[type="radio"]:disabled + label {
+    color: #999; /* Change the text color */
+}
+
+input:focus {
+    outline: none !important;
+    border-color: var(--sec-color);
+}
+
+/* CSS for fixed submit button */
+.submit-bottom-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    background-color: var(--bg-color);
+    text-align: center;
+}
+
+/* Increase the margin-bottom of form elements to accommodate the fixed submit button */
+.form-content {
+    margin-bottom: 100px; /* Adjust the value as needed to prevent overlap */
+}
+
+.form-content input,
+.form-content select,
+.form-content label,
+p, h1, h2 {
+    margin-left: 10px; /* Adjust the padding as needed */
+}

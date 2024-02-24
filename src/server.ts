@@ -11,7 +11,8 @@ dotenv.config(); // Load environment variables from .env file
 const app = express();
 
 // Define a custom interface for the session object
-interface CustomSession extends SessionData {
+interface CustomSession extends SessionData
+{
     loggedin?: boolean;
     userEmail?: string;
     userName?: string;
@@ -27,6 +28,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/userPics', express.static('userPics'));
+
 
 const connection = mysql.createConnection({
     host: process.env.SQL_HOST || 'localhost',
@@ -35,86 +38,106 @@ const connection = mysql.createConnection({
     database: process.env.SQL_DB_NAME || 'aaa_users'
 });
 
-app.post('/login', function(request: Request, response: Response) {
+app.post('/login', function (request: Request, response: Response)
+{
     let userEmail: string = (request.body?.email as string) ?? '';
     let password: string = (request.body?.password as string) ?? '';
     const customSession: CustomSession = request.session as CustomSession;
 
-    if (userEmail && password) {
-        connection.query('SELECT * FROM aaa_users WHERE userEmail = ?', [userEmail], function(error, results, fields) {
-            if (error) {
+    if (userEmail && password)
+    {
+        connection.query('SELECT * FROM aaa_users WHERE userEmail = ?', [userEmail], function (error, results, fields)
+        {
+            if (error)
+            {
                 console.error('Error querying user:', error);
                 response.status(500).send('Internal Server Error');
                 return;
             }
 
-            if (results.length === 0) {
+            if (results.length === 0)
+            {
                 response.status(400).send('Incorrect Email and/or Password!');
                 return;
             }
 
             const hashedPassword = results[0].userPassword;
 
-            bcrypt.compare(password, hashedPassword, function(compareError, isMatch) {
-                if (compareError) {
+            bcrypt.compare(password, hashedPassword, function (compareError, isMatch)
+            {
+                if (compareError)
+                {
                     console.error('Error comparing passwords:', compareError);
                     response.status(500).send('Internal Server Error');
                     return;
                 }
 
-                if (isMatch) {
+                if (isMatch)
+                {
                     customSession.loggedin = true;
                     customSession.userEmail = userEmail;
                     customSession.userName = results[0].userName;
                     customSession.userId = results[0].userId;
                     console.log(results.userName);
                     response.redirect('/home');
-                } else {
+                } else
+                {
                     response.status(400).send('Incorrect Email and/or Password!');
                 }
             });
         });
-    } else {
+    } else
+    {
         response.status(400).send('Please enter Email and Password!');
     }
 });
 
-app.post('/register', function(request: Request, response: Response) {
+app.post('/register', function (request: Request, response: Response)
+{
     // Handle registration form submission
     const regEmail: string = (request.body?.reg_email as string) ?? '';
     const regPassword: string = (request.body?.reg_password as string) ?? '';
     const regPassword2: string = (request.body?.reg_password2 as string) ?? '';
 
-    if (regEmail && regPassword) {
-        if (regPassword != regPassword2) {
+    if (regEmail && regPassword)
+    {
+        if (regPassword != regPassword2)
+        {
             response.status(400).send('Passwords do not match');
             return;
         }
         // Hash the password
-        bcrypt.hash(regPassword, 10, function(hashError, hashedPassword) {
-            if (hashError) {
+        bcrypt.hash(regPassword, 10, function (hashError, hashedPassword)
+        {
+            if (hashError)
+            {
                 console.error('Error hashing password:', hashError);
                 response.status(500).send('Error hashing password');
                 return;
             }
 
             // Check if user already exists
-            connection.query('SELECT * FROM aaa_users WHERE userEmail = ?', [regEmail], function(selectError, selectResults, selectFields) {
-                if (selectError) {
+            connection.query('SELECT * FROM aaa_users WHERE userEmail = ?', [regEmail], function (selectError, selectResults, selectFields)
+            {
+                if (selectError)
+                {
                     console.error('Error checking existing user:', selectError);
                     response.status(500).send('Error checking existing user');
                     return;
                 }
-                
-                if (selectResults.length > 0) {
+
+                if (selectResults.length > 0)
+                {
                     // User already exists
                     response.status(400).send('Email already exists');
                     return;
                 }
 
                 // Insert new user into the database with hashed password
-                connection.query('INSERT INTO aaa_users (userEmail, userPassword) VALUES (?, ?)', [regEmail, hashedPassword], function(insertError, insertResults, insertFields) {
-                    if (insertError) {
+                connection.query('INSERT INTO aaa_users (userEmail, userPassword) VALUES (?, ?)', [regEmail, hashedPassword], function (insertError, insertResults, insertFields)
+                {
+                    if (insertError)
+                    {
                         console.error('Error registering user:', insertError);
                         response.status(500).send('Error registering user');
                         return;
@@ -123,33 +146,69 @@ app.post('/register', function(request: Request, response: Response) {
                 });
             });
         });
-    } else {
+    } else
+    {
         response.status(400).send('Please enter Email and Password for registration');
     }
 });
 
 // Define a simple login route to handle GET requests
-app.get('/login', function(request: Request, response: Response) {
+app.get('/login', function (request: Request, response: Response)
+{
     response.sendFile(path.join(__dirname, '/../public/login.html'));
 });
 
-app.get('/', function(request: Request, response: Response) {
+app.get('/', function (request: Request, response: Response)
+{
     response.sendFile(path.join(__dirname + '/../public/login.html')); // Send the login page HTML file
 });
 
-app.get('/home', function(request: Request, response: Response) {
+app.get('/home', function (request: Request, response: Response)
+{
     const customSession: CustomSession = request.session as CustomSession;
-    
-    if (customSession.loggedin) {
+
+    if (customSession.loggedin)
+    {
         response.sendFile(path.join(__dirname, '/../public/home.html')); // Send the home page HTML file containing the form
-    } else {
+    } else
+    {
         response.send('Please login to view this page!');
     }
 });
 
-app.post('/submit-personal-data', function(request, response) {
+const storage = multer.diskStorage({
+    destination: 'userPics/', // Destination folder for uploaded images
+    filename: function (req, file, cb)
+    {
+        const customSession = req.session as CustomSession; // Assuming CustomSession is your session type
+        const userId = customSession.userId; // Assuming userId is stored in the session
+        const { vorname, nachname } = req.body; // Assuming vorname and nachname are sent in the form body
+
+        // Replace spaces in names with underscores and concatenate with userId
+        const formattedName = `${userId}_${nachname}_${vorname}`.replace(/\s+/g, '_');
+
+        const originalFileName = file.originalname;
+        const extension = originalFileName.split('.').pop();
+        const customFileName = `${formattedName}.${extension}`; // Custom filename: userId_vorname_nachname.extension
+        cb(null, customFileName);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 3 * 1024 * 1024, // Max file size: 3MB
+    },
+});
+
+
+app.post('/submit-personal-data', upload.single('profile-pic'), function (request, response)
+{
     const { vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen } = request.body;
     const customSession: CustomSession = request.session as CustomSession;
+
+    // Get the file path of the uploaded image
+    const imagePath = request.file ? request.file.path : null;
 
     // Perform any necessary validation or processing of the form data here
 
@@ -157,7 +216,7 @@ app.post('/submit-personal-data', function(request, response) {
     console.log('Submitted Data:', { vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen });
 
     // Insert the form data into the database
-    const sql = `
+    let sql = `
     INSERT INTO aaa_user_data 
     (userId, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
@@ -178,10 +237,22 @@ app.post('/submit-personal-data', function(request, response) {
     veteranen = VALUES(veteranen)
     `;
 
+    // Check if an image was uploaded
+    if (imagePath)
+    {
+        // If an image was uploaded, include it in the query
+        sql += ', userPicLink = ?';
+    }
+
     const values = [customSession.userId, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen];
-        
-    connection.query(sql, values, function(error, results, fields) {
-        if (error) {
+    // If an image was uploaded, append its path to the values array
+    if (imagePath) {
+        values.push(imagePath);
+    }
+    connection.query(sql, values, function (error, results, fields)
+    {
+        if (error)
+        {
             console.error('Error inserting data into database:', error);
             response.status(500).send('Error submitting data');
             return;
@@ -192,21 +263,26 @@ app.post('/submit-personal-data', function(request, response) {
     });
 });
 
-app.get('/fetch-user-data', function(request: Request, response: Response) {
+app.get('/fetch-user-data', function (request: Request, response: Response)
+{
     const customSession: CustomSession = request.session as CustomSession;
-    if (!customSession.loggedin || !customSession.userId) {
+    if (!customSession.loggedin || !customSession.userId)
+    {
         response.status(401).send('User not logged in');
         return;
     }
 
-    connection.query('SELECT * FROM aaa_user_data WHERE userId = ?', [customSession.userId], function(error, userDataResults, fields) {
-        if (error) {
+    connection.query('SELECT * FROM aaa_user_data WHERE userId = ?', [customSession.userId], function (error, userDataResults, fields)
+    {
+        if (error)
+        {
             console.error('Error retrieving user data:', error);
             response.status(500).send('Error retrieving user data');
             return;
         }
 
-        if (userDataResults.length === 0) {
+        if (userDataResults.length === 0)
+        {
             response.status(404).send('User data not found');
             return;
         }
@@ -218,44 +294,24 @@ app.get('/fetch-user-data', function(request: Request, response: Response) {
             ...userDataResults[0], // Shallow copy of the user data object
             geburtstdatum: geburtstdatum.toISOString().split('T')[0] // Extract YYYY-MM-DD part
         };
-        console.log("Fetched Data:", {formattedUserData})
+        console.log("Fetched Data:", { formattedUserData })
         response.json(formattedUserData);
     });
 });
 
-app.listen(3000, () => {
+app.listen(3000, () =>
+{
     console.log('Server is running on port 3000');
 
-    try {
+    try
+    {
         const now = new Date();
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         console.log('Server Timezone:', timezone);
-    } catch (error) {
+    } catch (error)
+    {
         console.error('Error retrieving timezone:', error);
     }
 });
 
-
-// Set up multer to handle file uploads
-const upload = multer({
-    dest: 'userPics/', // Destination folder for uploaded images
-    limits: {
-      fileSize: 3 * 1024 * 1024, // Max file size: 3MB
-    },
-  });
-  
-  // Define the endpoint for image upload
-  app.post('/upload-image', upload.single('image'), function (req, res) {
-    if (!req.file) {
-      // No file uploaded
-      return res.status(400).send('No file uploaded.');
-    }
-  
-    // File is uploaded, you can access it via req.file
-    const imagePath = req.file.path;
-    // Save imagePath to the database or use it as needed
-    // For example, you can save it to the user's profile in the database
-    
-    res.send('File uploaded successfully.');    
-});
 

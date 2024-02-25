@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import { createDBConnection } from "./db";
+import dotenv from "dotenv";
+
+dotenv.config(); // Load environment variables from .env file
 
 // Create sql db connection
 const connection = createDBConnection();
@@ -10,12 +13,12 @@ const { EMAIL_PASS } = process.env;
 
 // Create a transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
-    host: "vs-80.webhoster.ag", // Specify the email service's SMTP server
-    port: 465, // Port for secure SMTP
-    secure: true, // Indicates that this is a secure connection
+    host: process.env.EMAIL_HOST,
+    port: 465,
+    secure: true,
     auth: {
-        user: "tickets@agratamagatha.de", // Your email address
-        pass: EMAIL_PASS, // Your email password, retrieved from environment variables
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
 });
 

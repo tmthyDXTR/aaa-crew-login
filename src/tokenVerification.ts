@@ -1,15 +1,7 @@
-import mysql from "mysql";
-import dotenv from "dotenv";
+import { createDBConnection } from './db';
 
-dotenv.config(); // Load environment variables from .env file
-
-// Create a MySQL connection
-const connection = mysql.createConnection({
-    host: process.env.SQL_HOST || "localhost",
-    user: process.env.SQL_USER_NAME || "root",
-    password: process.env.SQL_USER_PASSWORD || "",
-    database: process.env.SQL_DB_NAME || "your_database_name",
-});
+// Create sql db connection
+const connection = createDBConnection();
 
 // Define the function to verify the token
 export function verifyToken(token: string): Promise<{ isValid: boolean, userId?: number, email?: string }> {

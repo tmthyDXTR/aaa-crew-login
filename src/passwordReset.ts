@@ -1,9 +1,9 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import mysql from "mysql";
-import dotenv from "dotenv";
+import { createDBConnection } from "./db";
 
-dotenv.config(); // Load environment variables from .env file
+// Create sql db connection
+const connection = createDBConnection();
 
 // Retrieve the email password from environment variables
 const { EMAIL_PASS } = process.env;
@@ -17,14 +17,6 @@ const transporter = nodemailer.createTransport({
         user: "tickets@agratamagatha.de", // Your email address
         pass: EMAIL_PASS, // Your email password, retrieved from environment variables
     },
-});
-console.log(process.env.SQL_HOST);
-// Create a MySQL connection
-const connection = mysql.createConnection({
-    host: process.env.SQL_HOST || "localhost",
-    user: process.env.SQL_USER_NAME || "root",
-    password: process.env.SQL_USER_PASSWORD || "",
-    database: process.env.SQL_DB_NAME || "aaa_users",
 });
 
 // Define the function to handle password reset request

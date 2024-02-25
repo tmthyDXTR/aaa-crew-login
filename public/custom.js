@@ -37,8 +37,14 @@ window.addEventListener('DOMContentLoaded', async () =>
         document.getElementById('veteranenJa').checked = userData.veteranen === 1;
         document.getElementById('veteranenNein').checked = userData.veteranen === 0;
 
+        document.getElementById('tshirtSize').value = userData.tshirtSize;
+        document.getElementById('hoodieSize').value = userData.hoodieSize;
+
+        document.getElementById('anmerkung').value = userData.anmerkung;
+
         // Show profile picture if userPicLink exists
-        if (userData.userPicLink) {
+        if (userData.userPicLink)
+        {
             const profilePicContainer = document.getElementById('profile-pic-container');
             const img = document.createElement('img');
             img.src = userData.userPicLink;
@@ -58,13 +64,18 @@ window.addEventListener('DOMContentLoaded', async () =>
     {
         hideAlert();
     });
-    document.getElementById('overlay').addEventListener('click', function(event) {
+    document.getElementById('overlay').addEventListener('click', function (event)
+    {
         console.log("test");
 
         event.preventDefault(); // Prevent the default action of the click event
         event.stopPropagation(); // Stop the event from propagating to underlying elements
     });
+
+    
 });
+
+
 
 function showAlert(text = null)
 {

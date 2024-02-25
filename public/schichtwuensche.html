@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shift Preferences</title>
+
+    <link href="/css/style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+    <div class="form-wrap">
+        <div class="dither-effect-container">
+            <img src="img/aaa-figur_weiss.png" alt="AAA Figur" class="dither-effect" />
+        </div>
+        <h1>SCHICHT IST PFLICHT</h1>
+        <p>Je früher du deine Schichtwünsche einträgst, umso wahrscheinlicher bekommst du sie auch.</p>
+        <br>
+        <p>nein/egal/ja!</p>
+
+        <div class="form-wrap-inner">
+            <form id="shift-preferences-form" action="/submit-shift-preferences" method="POST">
+                <p class="Schicht"></p>
+
+                <label for="viererSchicht" class="shift-radio">
+                    <input type="radio" id="viererSchicht0" value="0" class="red" name="viererSchicht">
+                    <input type="radio" id="viererSchicht1" value="1" class="grey" name="viererSchicht">
+                    <input type="radio" id="viererSchicht2" value="2" class="green" name="viererSchicht">
+                    2 Schichten hintereinander (4 Std)
+                </label>
+                <br>
+
+                <label for="eingangshäuschen" class="shift-radio">
+                    <input type="radio" id="eingangshäuschen0" value="0" class="red" name="eingangshäuschen">
+                    <input type="radio" id="eingangshäuschen1" value="1" class="grey" name="eingangshäuschen">
+                    <input type="radio" id="eingangshäuschen2" value="2" class="green" name="eingangshäuschen">
+                    Eingangshäuschen
+                </label>
+                <br>
+
+                <label for="greencamping" class="shift-radio">
+                    <input type="radio" id="greencamping0" value="0" class="red" name="greencamping">
+                    <input type="radio" id="greencamping1" value="1" class="grey" name="greencamping">
+                    <input type="radio" id="greencamping2" value="2" class="green" name="greencamping">
+                    GreenCamping
+                </label>
+                <br>
+
+                <label for="nachtwache" class="shift-radio">
+                    <input type="radio" id="nachtwache0" value="0" class="red" name="nachtwache">
+                    <input type="radio" id="nachtwache1" value="1" class="grey" name="nachtwache">
+                    <input type="radio" id="nachtwache2" value="2" class="green" name="nachtwache">
+                    Nachtwache
+                </label>
+                <br>
+
+                <label for="küche" class="shift-radio">
+                    <input type="radio" id="küche0" value="0" class="red" name="küche">
+                    <input type="radio" id="küche1" value="1" class="grey" name="küche">
+                    <input type="radio" id="küche2" value="2" class="green" name="küche">
+                    Küche (für Gäste)
+                </label>
+                <br>
+
+                <label for="künstlerbetreuung" class="shift-radio">
+                    <input type="radio" id="künstlerbetreuung0" value="0" class="red" name="künstlerbetreuung">
+                    <input type="radio" id="künstlerbetreuung1" value="1" class="grey" name="künstlerbetreuung">
+                    <input type="radio" id="künstlerbetreuung2" value="2" class="green" name="künstlerbetreuung">
+                    Künstlerbetreuung
+                </label>
+                <br>
+
+                <label for="personalbüro" class="shift-radio">
+                    <input type="radio" id="personalbüro0" value="0" class="red" name="personalbüro">
+                    <input type="radio" id="personalbüro1" value="1" class="grey" name="personalbüro">
+                    <input type="radio" id="personalbüro2" value="2" class="green" name="personalbüro">
+                    Personalbüro
+                </label>
+                <br>
+
+                <label for="kassenbüro" class="shift-radio">
+                    <input type="radio" id="kassenbüro0" value="0" class="red" name="kassenbüro">
+                    <input type="radio" id="kassenbüro1" value="1" class="grey" name="kassenbüro">
+                    <input type="radio" id="kassenbüro2" value="2" class="green" name="kassenbüro">
+                    Kassenbüro
+                </label>
+                <br>
+
+                <label for="parkplatz" class="shift-radio">
+                    <input type="radio" id="parkplatz0" value="0" class="red" name="parkplatz">
+                    <input type="radio" id="parkplatz1" value="1" class="grey" name="parkplatz">
+                    <input type="radio" id="parkplatz2" value="2" class="green" name="parkplatz">
+                    Parkplatz
+                </label>
+                <br>
+
+                <label for="flaschensammeln" class="shift-radio">
+                    <input type="radio" id="flaschensammeln0" value="0" class="red" name="flaschensammeln">
+                    <input type="radio" id="flaschensammeln1" value="1" class="grey" name="flaschensammeln">
+                    <input type="radio" id="flaschensammeln2" value="2" class="green" name="flaschensammeln">
+                    Flaschensammeln
+                </label>
+                <br>
+
+                <label for="ausschank" class="shift-radio">
+                    <input type="radio" id="ausschank0" value="0" class="red" name="ausschank">
+                    <input type="radio" id="ausschank1" value="1" class="grey" name="ausschank">
+                    <input type="radio" id="ausschank2" value="2" class="green" name="ausschank">
+                    Ausschank
+                </label>
+                <br>
+
+                <div class="submit-bottom-container">
+                    <input type="submit" class="dos-button" id="submit-button" value="SPEICHERN" />
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="/schichtwuensche.js"></script>

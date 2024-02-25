@@ -10,98 +10,142 @@
 </head>
 
 <body>
-    <h2>AAA 2024 Helfer_in-Anmeldung</h2>
-    <p>
-        Hiermit erkläre ich mich einverstanden, dass meine personenbezogenen
-        Daten für die Mitgliederkartierung des KUR e.V. verwendet werden.
-        Die Daten werden nicht an dritte weitergegeben.
-    </p>
-    <div class="overlay" id="overlay" style="display: none;"></div>
-    <form id="upload-form" action="/submit-personal-data" method="POST" enctype="multipart/form-data">
-        <div class="form-content">
-            <label for="vorname">Vorname:</label><br />
-            <input type="text" id="vorname" name="vorname" required /><br /><br />
-
-            <label for="nachname">Nachname:</label><br />
-            <input type="text" id="nachname" name="nachname" required /><br /><br />
-
-            <label for="spitzname">Spitzname:</label><br />
-            <input type="text" id="spitzname" name="spitzname" /><br /><br />
-
-            <label for="geburtstdatum">Geburtsdatum:</label><br />
-            <input type="date" id="geburtstdatum" name="geburtstdatum" required /><br /><br />
-
-            <label for="handynr">Handynummer:</label><br />
-            <input type="text" id="handynr" name="handynr" required /><br /><br />
-
-            <label for="wieOftDabei">Wie oft schon mitgeholfen:</label><br />
-            <input type="number" id="wieOftDabei" name="wieOftDabei" min="0" required /><br /><br />
-
-
-            <label for="profile-pic">Ausweisbild (max. 3MB):</label><br />
-            <div id="profile-pic-container"></div>
-            <input type="file" id="profile-pic" name="profile-pic" accept="image/*" /><br /><br />
-
-            <label for="essen">Food Preferences:</label><br />
-            <select id="essen" name="essen" required>
-                <option value="vegetarisch">vegetarisch</option>
-                <option value="vegan">vegan</option>
-                <option value="halal">halal</option>
-                <option value="kosher">kosher</option>
-                <option value="alles">alles</option>
-                <option value="fleisch">
-                    fleisch ist mein gemüse
-                </option>
-            </select><br /><br /><br />
-
-            <p>Bereitschaft Ordner (Kein BtMG-Eintrag):</p>
-            <input type="radio" id="ordnerJa" name="ordner" value="1" />
-            <label for="ordnerJa">Ja</label>
-            <input type="radio" id="ordnerNein" name="ordner" value="0" />
-            <label for="ordnerNein">Nein</label><br /><br />
-
-            <p>Bereitschaft Kurier/Fahrt:</p>
-            <input type="radio" id="kurierJa" name="kurier" value="1" />
-            <label for="kurierJa">Ja</label>
-            <input type="radio" id="kurierNein" name="kurier" value="0" />
-            <label for="kurierNein">Nein</label><br /><br />
-
-            <p>Ich bin beim Aufbau da:</p>
-            <input type="radio" id="aufbauJa" name="aufbau" value="1" />
-            <label for="aufbauJa">Ja</label>
-            <input type="radio" id="aufbauNein" name="aufbau" value="0" />
-            <label for="aufbauNein">Nein</label><br /><br />
-
-            <p>Ich bin am Festival-Wochenende da:</p>
-            <input type="radio" id="festivalJa" name="festival" value="1" />
-            <label for="festivalJa">Ja</label>
-            <input type="radio" id="festivalNein" name="festival" value="0" />
-            <label for="festivalNein">Nein</label><br /><br />
-
-            <p>Ich habe Schicht-Wünsche:</p>
-            <input type="radio" id="schichtJa" name="schicht" value="1" />
-            <label for="schichtJa">Ja</label>
-            <input type="radio" id="schichtNein" name="schicht" value="0" />
-            <label for="schichtNein">Nein</label><br /><br />
-
-            <p>Ich bin beim Abbau da:</p>
-            <input type="radio" id="abbauJa" name="abbau" value="1" />
-            <label for="abbauJa">Ja</label>
-            <input type="radio" id="abbauNein" name="abbau" value="0" />
-            <label for="abbauNein">Nein</label><br /><br />
-
-            <p>
-                Ich möchte Veteranenschichten (Wenig Schichten für
-                Althelfer/innen):
-            </p>
-            <input type="radio" id="veteranenJa" name="veteranen" value="1" />
-            <label for="veteranenJa">Ja</label>
-            <input type="radio" id="veteranenNein" name="veteranen" value="0" />
-            <label for="veteranenNein">Nein</label><br /><br />
+    <div class="form-wrap">
+        <div class="dither-effect-container">
+            <img src="img/aaa-figur_weiss.png" alt="AAA Figur" class="dither-effect" />
         </div>
-        <div class="submit-bottom-container">
-            <input type="submit" class="dos-button" id="submit-button" value="SPEICHERN" />
-        </div>
+        <h2>AAA 2024 Helfer_in-Anmeldung</h2>
+        <p>
+            Hiermit erkläre ich mich einverstanden, dass meine personenbezogenen
+            Daten für die Mitgliederkartierung des KUR e.V. verwendet werden.
+            Die Daten werden nicht an dritte weitergegeben.
+        </p>
+        <div class="overlay" id="overlay" style="display: none;"></div>
+        <form id="upload-form" action="/submit-personal-data" method="POST" enctype="multipart/form-data">
+            <div class="form-content">
+                <label for="vorname">Vorname:</label><br />
+                <input type="text" id="vorname" name="vorname" required /><br /><br />
+
+                <label for="nachname">Nachname:</label><br />
+                <input type="text" id="nachname" name="nachname" required /><br /><br />
+
+                <label for="spitzname">Spitzname:</label><br />
+                <input type="text" id="spitzname" name="spitzname" /><br /><br />
+
+                <label for="geburtstdatum">Geburtsdatum:</label><br />
+                <input type="date" id="geburtstdatum" name="geburtstdatum" required /><br /><br />
+
+                <label for="handynr">Handynummer:</label><br />
+                <input type="text" id="handynr" name="handynr" required /><br /><br />
+
+                <label for="wieOftDabei">Wie oft schon mitgeholfen:</label><br />
+                <input type="number" id="wieOftDabei" name="wieOftDabei" min="0" required /><br /><br />
+
+                <label for="anmerkung">Anmerkung (Körperliche Einschränkungen, besondere Führerscheine
+                    usw):</label><br />
+                <input type="text" id="anmerkung" name="anmerkung" /><br /><br />
+
+                <label for="profile-pic">Ausweisbild (max. 3MB):</label><br />
+                <div id="profile-pic-container"></div>
+                <input type="file" id="profile-pic" name="profile-pic" accept="image/*" /><br /><br />
+
+                <label for="essen">Food Preferences:</label><br />
+                <select id="essen" name="essen" required>
+                    <option value="vegetarisch">vegetarisch</option>
+                    <option value="vegan">vegan</option>
+                    <option value="halal">halal</option>
+                    <option value="kosher">kosher</option>
+                    <option value="alles">alles</option>
+                    <option value="fleisch">
+                        fleisch ist mein gemüse
+                    </option>
+                </select><br /><br /><br />
+
+                <label for="tshirtSize">T-Shirt Size:</label><br />
+                <select id="tshirtSize" name="tshirtSize">
+                    <option value="0">Ich möchte keins</option>
+                    <option value="m_xxs">regular fit xxs</option>
+                    <option value="m_xs">regular fit xs</option>
+                    <option value="m_s">regular fit s</option>
+                    <option value="m_m">regular fit m</option>
+                    <option value="m_l">regular fit l</option>
+                    <option value="m_xl">regular fit xl</option>
+                    <option value="m_xxl">regular fit xxl</option>
+                    <option value="m_xxxl">regular fit xxxl</option>
+                    <option value="g_xxs">curved fit xxs</option>
+                    <option value="g_xs">curved fit xs</option>
+                    <option value="g_s">curved fit s</option>
+                    <option value="g_m">curved fit m</option>
+                    <option value="g_l">curved fit l</option>
+                    <option value="g_xl">curved fit xl</option>
+                    <option value="g_xxl">curved fit xxl</option>
+                    <option value="g_xxxl">curved fit xxxl</option>
+                </select><br /><br />
+
+                <label for="hoodieSize">Hoodie Size:</label><br />
+                <select id="hoodieSize" name="hoodieSize">
+                    <option value="0">Ich möchte keinen</option>
+                    <option value="xxs">xxs</option>
+                    <option value="xs">xs</option>
+                    <option value="s">s</option>
+                    <option value="m">m</option>
+                    <option value="l">l</option>
+                    <option value="xl">xl</option>
+                    <option value="xxl">xxl</option>
+                    <option value="xxxl">xxxl</option>
+                </select><br /><br />
+
+                <p>Bereitschaft Ordner (Kein BtMG-Eintrag):</p>
+                <input type="radio" id="ordnerJa" name="ordner" value="1" />
+                <label for="ordnerJa">Ja</label>
+                <input type="radio" id="ordnerNein" name="ordner" value="0" />
+                <label for="ordnerNein">Nein</label><br /><br />
+
+                <p>Bereitschaft Kurier/Fahrt:</p>
+                <input type="radio" id="kurierJa" name="kurier" value="1" />
+                <label for="kurierJa">Ja</label>
+                <input type="radio" id="kurierNein" name="kurier" value="0" />
+                <label for="kurierNein">Nein</label><br /><br />
+
+                <p>Ich bin beim Aufbau da:</p>
+                <input type="radio" id="aufbauJa" name="aufbau" value="1" />
+                <label for="aufbauJa">Ja</label>
+                <input type="radio" id="aufbauNein" name="aufbau" value="0" />
+                <label for="aufbauNein">Nein</label><br /><br />
+
+                <p>Ich bin am Festival-Wochenende da:</p>
+                <input type="radio" id="festivalJa" name="festival" value="1" />
+                <label for="festivalJa">Ja</label>
+                <input type="radio" id="festivalNein" name="festival" value="0" />
+                <label for="festivalNein">Nein</label><br /><br />
+
+                <p>Ich habe Schicht-Wünsche:</p>
+                <input type="radio" id="schichtJa" name="schicht" value="1" />
+                <label for="schichtJa">Ja</label>
+                <input type="radio" id="schichtNein" name="schicht" value="0" />
+                <label for="schichtNein">Nein</label><br /><br />
+
+                <p>Ich bin beim Abbau da:</p>
+                <input type="radio" id="abbauJa" name="abbau" value="1" />
+                <label for="abbauJa">Ja</label>
+                <input type="radio" id="abbauNein" name="abbau" value="0" />
+                <label for="abbauNein">Nein</label><br /><br />
+
+                <p>
+                    Ich möchte Veteranenschichten (Wenig Schichten für
+                    Althelfer/innen):
+                </p>
+                <input type="radio" id="veteranenJa" name="veteranen" value="1" />
+                <label for="veteranenJa">Ja</label>
+                <input type="radio" id="veteranenNein" name="veteranen" value="0" />
+                <label for="veteranenNein">Nein</label><br /><br />
+
+
+            </div>
+    </div>
+    <div class="submit-bottom-container">
+        <input type="submit" class="dos-button" id="submit-button" value="SPEICHERN & ZU DEN SCHICHTWÜNSCHEN" />
+    </div>
     </form>
     <div class="alert" id="alert-window" style="display:none">
         <p id="alert-content"></p>

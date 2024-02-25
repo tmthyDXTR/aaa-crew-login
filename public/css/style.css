@@ -28,6 +28,7 @@ body {
 
     filter: contrast(140%) brightness(120%); /* Apply dithering effect */
     width: 20vw;
+    max-width: 150px;
 }
 .login-background-image {
     position: fixed;

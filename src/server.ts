@@ -160,10 +160,11 @@ app.get("/home", function (request: Request, response: Response) {
     }
 });
 
-
-
-app.post("/submit-personal-data", uploadHandler.single("profile-pic"), submitPersonalData);
-
+app.post(
+    "/submit-personal-data",
+    uploadHandler.single("profile-pic"),
+    submitPersonalData
+);
 
 app.get("/schichtwuensche", function (request, response) {
     // Render the shift preferences form page here
@@ -351,4 +352,41 @@ app.listen(3000, () => {
     } catch (error) {
         console.error("Error retrieving timezone:", error);
     }
+});
+
+// Define route to fetch Gantt data
+app.get("/fetch-gantt-data", (request: Request, response: Response) => {
+    console.log("fetch shift data");
+    // Your MySQL query
+    const query = `SELECT * FROM test_schichten WHERE schicht_tag = "FR"
+    ORDER BY 
+        CASE schicht_tag 
+            WHEN 'FR' THEN 1
+            WHEN 'SA' THEN 2
+            WHEN 'SO' THEN 3
+            ELSE 4
+        END,
+        schicht_ort ASC,
+        start_time ASC,
+        schicht_id ASC
+    LIMIT 50;`;
+
+    // Execute the query
+    connection.query(query, (err, results) => {
+
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // CRAZYYY TIME
+        // // Adjust each slot's start_time and end_time by adding 2 hours
+        // results.forEach((row: { start_time: Date; end_time: Date; }) => {
+        //     row.start_time = new Date(row.start_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        //     row.end_time = new Date(row.end_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        // });
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
 });

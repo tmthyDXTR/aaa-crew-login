@@ -294,3 +294,33 @@ session_1.app.listen(3000, () => {
         console.error("Error retrieving timezone:", error);
     }
 });
+// Define route to fetch Gantt data
+session_1.app.get('/fetch-gantt-data', (req, res) => {
+    // Your MySQL query
+    const query = `SELECT * FROM test_schichten
+    ORDER BY 
+        CASE schicht_tag
+            WHEN 'FR' THEN 1
+            WHEN 'SA' THEN 2
+            WHEN 'SO' THEN 3
+            ELSE 4
+        END,
+        schicht_ort ASC,
+        schicht_id ASC,
+        start_time ASC
+    LIMIT 50;`;
+    // Execute the query
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error('Error executing MySQL query: ' + err.stack);
+            res.status(500).json({ error: 'Internal server error' });
+            return;
+        }
+        // Send JSON response with query results
+        res.json(results);
+    });
+});
+session_1.app.get("/frontendGantt.html", function (req, res) {
+    console.log("load gantt");
+    res.render(path_1.default.join(__dirname, "../public/frontendGantt.html"));
+});

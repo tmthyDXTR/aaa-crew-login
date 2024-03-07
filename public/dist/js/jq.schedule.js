@@ -720,7 +720,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
         var x = node.position().left; // var w = node.width();
 
-        var start = saveData.tableStartTime + 3600 + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
+        // 1 hour DIFFERENCE on DRAG WHAT THE FUCKING TIME FUCK
+        // var start = saveData.tableStartTime + 3600 + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
+        var start = saveData.tableStartTime + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
 
         var end = start + (data.endTime - data.startTime);
         var html = methods.formatTime(start) + '-' + methods.formatTime(end);

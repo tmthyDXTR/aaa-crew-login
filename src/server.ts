@@ -369,7 +369,7 @@ app.get("/fetch-gantt-data", (request: Request, response: Response) => {
         schicht_ort ASC,
         start_time ASC,
         schicht_id ASC
-    LIMIT 10;`;
+    LIMIT 20;`;
 
     // Execute the query
     connection.query(query, (err, results) => {

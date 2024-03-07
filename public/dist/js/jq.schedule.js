@@ -460,7 +460,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
             var $moveNode = $(this);
             var scKey = $moveNode.data('sc_key');
-            
+
             var timelineNum = methods._getTimeLineNumber.apply($this, [currentNode, ui.position.top]); // eslint-disable-next-line no-param-reassign
 
 
@@ -473,6 +473,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
             currentNode.currentTop = ui.position.top;
             currentNode.currentLeft = ui.position.left; // テキスト変更
+
             methods._rewriteBarText.apply($this, [$moveNode, saveData.schedule[scKey]]);
 
             return true;
@@ -484,8 +485,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
             var $n = $(this);
             var scKey = $n.data('sc_key');
             var x = $n.position().left; // var w = $n.width();
-           // @michilang added 1 hour (+3600) because after drag it was 1hour too early
-            var start = saveData.tableStartTime +3600 + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
+
+            var start = saveData.tableStartTime + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
+
             var end = start + (saveData.schedule[scKey].endTime - saveData.schedule[scKey].startTime);
             saveData.schedule[scKey].start = methods.formatTime(start);
             saveData.schedule[scKey].end = methods.formatTime(end);
@@ -720,8 +722,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
         var x = node.position().left; // var w = node.width();
 
-        // 1 hour DIFFERENCE on DRAG WHAT THE FUCKING TIME FUCK
-        // var start = saveData.tableStartTime + 3600 + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
         var start = saveData.tableStartTime + Math.floor(x / setting.widthTimeX) * setting.widthTime; // var end = saveData.tableStartTime + (Math.floor((x + w) / setting.widthTimeX) * setting.widthTime);
 
         var end = start + (data.endTime - data.startTime);
@@ -800,7 +800,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
 
           $e1.css({
-            top: 0 // CUSTOM SETTING, always force elements on one row @ML
+            top: h * setting.timeLineY + setting.timeLinePaddingTop
           });
           check[h][check[h].length] = c1;
         } // 高さの調整

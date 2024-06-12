@@ -21,8 +21,12 @@ async function fetchShiftPreferences() {
         document.getElementById("flaschensammeln"+shiftData.schicht_flaschensammeln).checked = true;
         document.getElementById("ausschank"+shiftData.schicht_ausschank).checked = true;
 
-
-
+        document.getElementById("frDaAb").value = shiftData.fr_da_ab;
+        document.getElementById("frDaBis").value = shiftData.fr_da_bis;
+        document.getElementById("saDaAb").value = shiftData.sa_da_ab;
+        document.getElementById("saDaBis").value = shiftData.sa_da_bis;
+        document.getElementById("soDaAb").value = shiftData.so_da_ab;
+        document.getElementById("soDaBis").value = shiftData.so_da_bis;
     } catch (error) {
         console.error('Error fetching shift preferences:', error);
         // Handle error, show alert or take appropriate action

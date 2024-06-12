@@ -29,6 +29,12 @@
                 <label for="nachname">Nachname:</label><br />
                 <input type="text" id="nachname" name="nachname" required /><br /><br />
 
+                <p>Mein Klarname darf im öffentlichen Schlichtplan angezeigt werden, sonst bist du #<span id="klarnameUserId"></span></p>
+                <input type="radio" id="klarnameJa" name="klarname" value="1" />
+                <label for="klarnameJa">Ja</label>
+                <input type="radio" id="klarnameNein" name="klarname" value="0" />
+                <label for="klarnameNein">Nein</label><br /><br />
+
                 <label for="spitzname">Spitzname:</label><br />
                 <input type="text" id="spitzname" name="spitzname" /><br /><br />
 
@@ -45,7 +51,7 @@
                     usw):</label><br />
                 <input type="text" id="anmerkung" name="anmerkung" /><br /><br />
 
-                <label for="profile-pic">Ausweisbild (max. 3MB):</label><br />
+                <label for="profile-pic">Ausweisbild (max. 6MB):</label><br />
                 <div id="profile-pic-container"></div>
                 <input type="file" id="profile-pic" name="profile-pic" accept="image/*" /><br /><br />
 

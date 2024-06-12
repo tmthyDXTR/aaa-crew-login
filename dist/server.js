@@ -151,6 +151,77 @@ session_1.app.get("/schichtwuensche", function (request, response) {
     // Render the shift preferences form page here
     response.sendFile(path_1.default.join(__dirname, "/../public/schichtwuensche.html"));
 });
+session_1.app.get("/aufbauwoche", function (request, response) {
+    // Render the shift preferences form page here
+    response.sendFile(path_1.default.join(__dirname, "/../public/aufbauwoche.html"));
+});
+// Add a new backend route to fetch shift preferences
+session_1.app.get("/fetch-aufbau-groups", function (request, response) {
+    const customSession = request.session;
+    if (!customSession.loggedin || !customSession.userId) {
+        response.status(401).send("User not logged in");
+        return;
+    }
+    connection.query("SELECT * FROM aaa_aufbau_24", [customSession.userId], function (error, aufbauDataResults, fields) {
+        if (error) {
+            console.error("Error retrieving aufbau groups:", error);
+            response.status(500).send("Error retrieving aufbau groups");
+            return;
+        }
+        if (aufbauDataResults.length === 0) {
+            response.status(404).send("aufbau groups not found");
+            return;
+        }
+        // Send the shift preferences data as JSON response
+        console.log("Fetched Data:", aufbauDataResults);
+        response.json(aufbauDataResults);
+    });
+});
+// Add a new backend route to fetch aufbau selection data
+session_1.app.get("/fetch-aufbau-selection-data", function (request, response) {
+    const customSession = request.session;
+    if (!customSession.loggedin || !customSession.userId) {
+        response.status(401).send("User not logged in");
+        return;
+    }
+    connection.query("SELECT userId, aufbau_ids FROM aaa_user_data", function (error, aufbauSelectionResults, fields) {
+        if (error) {
+            console.error("Error retrieving aufbau groups:", error);
+            response.status(500).send("Error retrieving aufbau selection data");
+            return;
+        }
+        if (aufbauSelectionResults.length === 0) {
+            response.status(404).send("aufbau selection data not found");
+            return;
+        }
+        // Send the shift preferences data as JSON response
+        console.log("Fetched Data:", aufbauSelectionResults);
+        response.json([aufbauSelectionResults, customSession.userId]);
+    });
+});
+session_1.app.post("/submit-aufbau-selection", function (request, response) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { aufbauIds } = request.body;
+        const customSession = request.session;
+        try {
+            // Update aufbau selection of current user
+            connection.query("UPDATE aaa_user_data SET aufbau_ids = ? WHERE userId = ?", [aufbauIds, customSession.userId], function (updateError, updateResults) {
+                if (updateError) {
+                    console.error("Error updating aufbau selection:", updateError);
+                    response
+                        .status(500)
+                        .send("Error updating aufbau selection");
+                    return;
+                }
+                response.redirect("/home"); // Redirect to login page after successful password reset
+            });
+        }
+        catch (error) {
+            console.error("Error updating aufbau selection:", error);
+            response.status(500).send("Error updating aufbau selection");
+        }
+    });
+});
 session_1.app.post("/submit-shift-preferences", submitShiftPreferences_1.submitShiftPreferences);
 // Add a new backend route to fetch shift preferences
 session_1.app.get("/fetch-shift-preferences", function (request, response) {
@@ -295,32 +366,188 @@ session_1.app.listen(3000, () => {
     }
 });
 // Define route to fetch Gantt data
-session_1.app.get('/fetch-gantt-data', (req, res) => {
+session_1.app.get("/fetch-gantt-data", (request, response) => {
+    console.log("fetch shift data");
     // Your MySQL query
-    const query = `SELECT * FROM test_schichten
+    const query = `SELECT * FROM test_schichten WHERE schicht_tag = "FR"
     ORDER BY 
-        CASE schicht_tag
+        CASE schicht_tag 
             WHEN 'FR' THEN 1
             WHEN 'SA' THEN 2
             WHEN 'SO' THEN 3
             ELSE 4
         END,
         schicht_ort ASC,
-        schicht_id ASC,
-        start_time ASC
+        start_time ASC,
+        schicht_id ASC
     LIMIT 50;`;
     // Execute the query
     connection.query(query, (err, results) => {
         if (err) {
-            console.error('Error executing MySQL query: ' + err.stack);
-            res.status(500).json({ error: 'Internal server error' });
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
             return;
         }
+        // CRAZYYY TIME
+        // // Adjust each slot's start_time and end_time by adding 2 hours
+        // results.forEach((row: { start_time: Date; end_time: Date; }) => {
+        //     row.start_time = new Date(row.start_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        //     row.end_time = new Date(row.end_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        // });
+        console.log(results);
         // Send JSON response with query results
-        res.json(results);
+        response.json(results);
     });
 });
-session_1.app.get("/frontendGantt.html", function (req, res) {
-    console.log("load gantt");
-    res.render(path_1.default.join(__dirname, "../public/frontendGantt.html"));
+// Store previous state of the data
+let history = [];
+// Route to handle schedule updates
+session_1.app.post('/updateSchedule', (request, response) => {
+    // Extract updated schedule data from the request body
+    const updatedData = request.body;
+    // Extract the id and updated start and end times from updatedData
+    const { start, end } = updatedData;
+    const id = updatedData.data.id;
+    // Retrieve the current start_time and end_time from the database
+    const query = `SELECT start_time, end_time FROM test_schichten WHERE id = ?;`;
+    const values = [id];
+    // Execute the select query to get the current start_time and end_time
+    connection.query(query, values, (err, results) => {
+        if (err) {
+            console.error("Error executing SQL SELECT query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // Store previous state
+        history.push({ id: id, start_time: results[0].start_time, end_time: results[0].end_time });
+        console.log(results[0]);
+        // Extract the current start_time and end_time from the results
+        const currentStartTime = results[0].start_time;
+        const currentEndTime = results[0].end_time;
+        // Extract the time part (hours and minutes) from the updated start and end times
+        const updatedStartTimeParts = start.split(':');
+        const updatedEndTimeParts = end.split(':');
+        // Construct the new start_time and end_time by combining the date part with the updated hours
+        const updatedStartTime = new Date(currentStartTime);
+        updatedStartTime.setHours(parseInt(updatedStartTimeParts[0]), parseInt(updatedStartTimeParts[1]), 0);
+        const updatedEndTime = new Date(currentEndTime);
+        updatedEndTime.setHours(parseInt(updatedEndTimeParts[0]), parseInt(updatedEndTimeParts[1]), 0);
+        // Execute SQL UPDATE statement to update the start_time and end_time
+        const updateQuery = `UPDATE test_schichten SET start_time = ?, end_time = ? WHERE id = ?;`;
+        const updateValues = [updatedStartTime, updatedEndTime, id];
+        // Execute the update query
+        connection.query(updateQuery, updateValues, (err, results) => {
+            if (err) {
+                console.error("Error executing SQL UPDATE query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+            // Send success response
+            response.json({ success: true, message: 'Start and end times updated successfully' });
+        });
+    });
+});
+// Route to handle undo action
+session_1.app.post('/undo', (request, response) => {
+    // Check if there is a previous state in history
+    if (history.length > 0) {
+        // Retrieve the previous state from history
+        const prevState = history.pop();
+        // Restore the previous state in the database
+        const query = `UPDATE test_schichten SET start_time = ?, end_time = ? WHERE id = ?;`;
+        const values = [prevState === null || prevState === void 0 ? void 0 : prevState.start_time, prevState === null || prevState === void 0 ? void 0 : prevState.end_time, prevState === null || prevState === void 0 ? void 0 : prevState.id];
+        // Execute the update query
+        connection.query(query, values, (err, results) => {
+            if (err) {
+                console.error("Error executing SQL UPDATE query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+            // Send success response
+            response.json({ success: true, message: 'Undo action completed successfully' });
+        });
+    }
+    else {
+        response.status(400).json({ error: "No previous state available for undo" });
+    }
+});
+// Route to handle fetching history
+session_1.app.get('/history', (request, response) => {
+    // Fetch history data from wherever it's stored
+    // For example, you can fetch it from the history array
+    response.json(history);
+});
+// Route to handle fetching users with a specified column and value
+session_1.app.get('/users-with-shift-preference', (request, response) => {
+    const { column, value } = request.query;
+    // Mapping of shift codes to column names
+    const shiftColumnMapping = {
+        'AO': 'schicht_ausschank',
+        'AU': 'schicht_ausschank',
+        'AW': 'schicht_awareness',
+        'BSH': 'schicht_künstlerbetreuung',
+        'BSZ': 'schicht_künstlerbetreuung',
+        'EP': 'schicht_parkplatz',
+        'ES': 'schicht_parkplatz',
+        'FMS': 'schicht_flaschensammeln',
+        'HEI': 'schicht_eingangshäuschen',
+        // Add more mappings as needed
+    };
+    // Check if column is valid
+    const mappedColumn = shiftColumnMapping[column];
+    if (!mappedColumn) {
+        response.status(400).json({ error: 'Invalid column name' });
+        return;
+    }
+    // Construct the SQL query dynamically
+    const query = `SELECT * FROM test_user_data WHERE ${mappedColumn} = ?;`;
+    connection.query(query, [value], (error, results) => {
+        if (error) {
+            console.error('Error fetching users with specified column and value:', error);
+            response.status(500).json({ error: 'Internal server error' });
+        }
+        else {
+            response.json(results);
+        }
+    });
+});
+// Route to handle add shift action
+session_1.app.post('/addShift', (request, response) => {
+    const { startTime, endTime, title, day } = request.body;
+    // Add shift slot to the SQL table
+    const sql = `INSERT INTO test_schichten (schicht_ort, schicht_tag, start_time, end_time) VALUES (?, ?, ?, ?)`;
+    const values = [
+        title,
+        day,
+        "2024-07-26 " + startTime + ":00",
+        "2024-07-26 " + endTime + ":00"
+    ];
+    // Execute the update query
+    connection.query(sql, values, (err, results) => {
+        if (err) {
+            console.error("Error executing SQL INSERT query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // Retrieve the ID of the added shift
+        const shiftId = results.insertId;
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Add shift action completed successfully', shiftId });
+    });
+});
+// Route to handle delete shift action
+session_1.app.post('/deleteShift', (request, response) => {
+    const { id } = request.query;
+    // Delete shift slot from the SQL table
+    const sql = `DELETE FROM test_schichten WHERE id=${id}`;
+    // Execute the update query
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error("Error executing SQL DELETE query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Delete shift action completed successfully', id });
+    });
 });

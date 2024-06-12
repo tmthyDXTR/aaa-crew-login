@@ -8,43 +8,53 @@
   <style>
     /* Style the modal */
     .modal {
-        z-index: 5555555 !important;
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      z-index: 5555555 !important;
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 1;
+      /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      /* Black w/ opacity */
     }
-    
+
     /* Modal Content/Box */
     .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto; /* 15% from the top and centered */
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%; /* Could be more or less, depending on screen size */
+      background-color: #fefefe;
+      margin: 15% auto;
+      /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      /* Could be more or less, depending on screen size */
     }
-    
+
     /* Close Button */
     .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
     }
-    
+
     .close:hover,
     .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
     }
-</style>
+  </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
@@ -53,9 +63,22 @@
 
   <script type="text/javascript" src="../dist/js/jq.schedule.js"></script>
   <link rel="stylesheet" type="text/css" href="../dist/css/style.min.css" />
+  <link href="/css/styleGantt.css" rel="stylesheet" type="text/css" />
+
 </head>
 
 <body>
+  <button id="undoButton" class="dos-button">Undo</button>
+  <button id="history-button" class="dos-button">History</button>
+
+  <input type="checkbox" id="value0" class="dos-checkbox" value=0>
+  <label for="value0" class="dos-checkbox-label">0</label>
+  <input type="checkbox" id="value1" class="dos-checkbox" value=1>
+  <label for="value1" class="dos-checkbox-label">1</label>
+  <input type="checkbox" id="value2" class="dos-checkbox" value=2>
+  <label for="value2" class="dos-checkbox-label">2</label>
+
+
   <h1>Time Table</h1>
   <div id="schedule">
     <div class="">
@@ -67,12 +90,16 @@
 <div id="slotInfo" class="modal">
 
   <!-- Modal content -->
-  <div class="modal-content">
+  <div class="modal-content" id="">
+    <div id="historyList" style="display:none"></div>
+
     <span class="close">&times;</span>
+    <div id="modal-content"></div>
     <h3 id="slotCode"></h3><br>
     <p id="schicht-ort"></p><br>
     <p id="schicht-tag"></p><br>
-    <p id="schicht-starzeit"></p><p id="schicht-endzeit"></p><br>
+    <p id="schicht-starzeit"></p>
+    <p id="schicht-endzeit"></p><br>
 
 
   </div>
@@ -85,6 +112,5 @@
 <script src="ganttSchedule.js"></script>
 
 <script>
-
 
 </script>

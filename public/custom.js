@@ -7,6 +7,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         // Populate form fields with user data
         document.getElementById("vorname").value = userData.vorname;
         document.getElementById("nachname").value = userData.nachname;
+        document.getElementById("klarnameJa").checked = userData.klarname === 1;
+        document.getElementById("klarnameNein").checked = userData.klarname === 0;
+        document.getElementById("klarnameUserId").innerHTML = userData.userId;
+
         document.getElementById("spitzname").value = userData.spitzname;
         document.getElementById("geburtstdatum").value = userData.geburtstdatum;
         document.getElementById("handynr").value = userData.handynr;

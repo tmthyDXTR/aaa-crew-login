@@ -65,7 +65,7 @@ export function handlePasswordResetRequest(email: string): Promise<string> {
                         }
 
                         // Send the password reset email with a link containing the token
-                        const resetLink = `https://helfer.agratamagatha.de/reset-password/${token}`;
+                        const resetLink = `https://crew.agratamagatha.de/reset-password/${token}`;
                         const mailOptions = {
                             from: "info@agratamagatha.de",
                             to: email,

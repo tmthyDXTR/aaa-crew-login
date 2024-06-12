@@ -22,6 +22,6 @@ const storage = multer_1.default.diskStorage({
 exports.uploadHandler = (0, multer_1.default)({
     storage: storage,
     limits: {
-        fileSize: 3 * 1024 * 1024, // Max file size: 3MB
+        fileSize: 6 * 1024 * 1024, // Max file size: 3MB
     },
 });

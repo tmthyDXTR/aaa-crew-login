@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AAA 2024 Crew Anmeldung</title>
+
+    <link href="/css/style.css" rel="stylesheet" type="text/css" />
+
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+            white-space: nowrap;
+            /* Prevent text from wrapping */
+            overflow: hidden;
+            /* Hide overflowing text */
+            text-overflow: ellipsis;
+            /* Add ellipsis to truncated text */
+        }
+
+        th {
+            background-color: black;
+            color: white;
+            /* Ensure text is visible on black background */
+        }
+
+        /* Fixed widths for each column */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 10px;
+            /* Width for Select column */
+        }
+
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 50px;
+            /* Width for 'was' column */
+        }
+
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 50px;
+            /* Width for 'wann' column */
+        }
+
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 80px;
+            /* Width for 'wieviel' column */
+        }
+
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 120px;
+            /* Width for 'chef:in' column */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="form-wrap">
+        <div class="dither-effect-container">
+            <img src="img/aaa-figur_weiss.png" alt="AAA Figur" class="dither-effect" />
+        </div>
+        <h1>AUFBAUWOCHE</h1>
+        <p>Trag dich ein für welche Aufbauaktivitäten du dich sehr begeisterst UND auch anwesend sein wirst :)</p>
+        <br>
+
+        <table id="aufbauTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <!-- <th>aufbau_id</th> -->
+                    <th>was</th>
+                    <th>wann</th>
+                    <th>Personen</th>
+                    <th>chef:in</th>
+                    <!-- <th>aufbau_verantwortlich_kontakt</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- JavaScript will populate this -->
+            </tbody>
+        </table>
+
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <div class="submit-bottom-container">
+        <input type="submit" class="dos-button" id="submit-button" value="SPEICHERN" />
+    </div>
+</body>
+
+</html>
+<script src="/aufbau.js"></script>
+
+<script>
+
+</script>

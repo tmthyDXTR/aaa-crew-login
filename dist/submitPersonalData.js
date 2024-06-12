@@ -5,7 +5,7 @@ const db_1 = require("./db");
 // Create sql db connection
 const connection = (0, db_1.createDBConnection)();
 function submitPersonalData(request, response) {
-    const { vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, anmerkung, } = request.body;
+    const { klarname, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, anmerkung, } = request.body;
     const customSession = request.session;
     // Get the file path of the uploaded image
     const imagePath = request.file ? request.file.path : null;
@@ -14,6 +14,7 @@ function submitPersonalData(request, response) {
     // Perform any necessary validation or processing of the form data here
     // Example: Log the submitted data
     console.log("Submitted Data:", {
+        klarname,
         vorname,
         nachname,
         spitzname,
@@ -31,13 +32,15 @@ function submitPersonalData(request, response) {
         tshirtSize,
         hoodieSize,
         anmerkung,
+        imagePath
     });
     // Insert the form data into the database
     let sql = `
         INSERT INTO aaa_user_data 
-        (userId, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        (userId, klarname, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
         ON DUPLICATE KEY UPDATE 
+        klarname = VALUES(klarname),
         vorname = VALUES(vorname), 
         nachname = VALUES(nachname), 
         spitzname = VALUES(spitzname), 
@@ -63,6 +66,7 @@ function submitPersonalData(request, response) {
     }
     const values = [
         customSession.userId,
+        klarname,
         vorname,
         nachname,
         spitzname,
@@ -92,7 +96,27 @@ function submitPersonalData(request, response) {
             return;
         }
         console.log("Data inserted successfully");
-        response.redirect("/schichtwuensche");
+        // If an image was uploaded, run a second query to update userPicLink
+        if (imagePath) {
+            const sql2 = `
+                UPDATE aaa_user_data 
+                SET userPicLink = ? 
+                WHERE userId = ?
+            `;
+            const values2 = [imagePath, customSession.userId];
+            connection.query(sql2, values2, function (error, results, fields) {
+                if (error) {
+                    console.error("Error updating userPicLink:", error);
+                    response.status(500).send("Error submitting data");
+                    return;
+                }
+                console.log("userPicLink updated successfully");
+                response.redirect("/schichtwuensche");
+            });
+        }
+        else {
+            response.redirect("/schichtwuensche");
+        }
     });
 }
 exports.submitPersonalData = submitPersonalData;

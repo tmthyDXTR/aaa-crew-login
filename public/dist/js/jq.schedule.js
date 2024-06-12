@@ -800,7 +800,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           }
 
           $e1.css({
-            top: h * setting.timeLineY + setting.timeLinePaddingTop
+            top: 0
           });
           check[h][check[h].length] = c1;
         } // 高さの調整

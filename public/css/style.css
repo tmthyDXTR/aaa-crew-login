@@ -287,9 +287,17 @@ input {
     }
 }
 
+.schichtenShit {
+    padding-bottom: 250px;
+}
+
 input[type="radio"] {
     display: none;
     /* Hide the default radio button */
+}
+
+.timeInput {
+    width: 50px;
 }
 
 /* Style the custom radio button */
@@ -427,3 +435,65 @@ h2 {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   
   }
+
+
+  /* Basic table styling for readability */
+#aufbauTable {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+    overflow-x: auto;
+    display: block;
+}
+
+#aufbauTable th, #aufbauTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    white-space: normal; /* Ensures text wraps within cells */
+    word-wrap: break-word; /* Ensures long words break correctly */
+    overflow-wrap: break-word; /* Added to handle long words */
+}
+
+/* Fixed table header background */
+#aufbauTable th {
+    background-color: black;
+}
+
+/* Scrollable table */
+.table-container {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Responsive styling for small screens */
+@media screen and (max-width: 1px) {
+    #aufbauTable, #aufbauTable thead, #aufbauTable tbody, #aufbauTable th, #aufbauTable td, #aufbauTable tr {
+        display: block;
+    }
+
+    #aufbauTable tr {
+        margin-bottom: 1em;
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    #aufbauTable td {
+        border: none;
+        border-bottom: 1px solid #ddd;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+
+    #aufbauTable td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-left: 10px;
+        font-weight: bold;
+        text-align: left;
+    }
+}

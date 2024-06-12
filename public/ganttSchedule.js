@@ -18,13 +18,21 @@ window.addEventListener("DOMContentLoaded", async () => {
             timeLineY: 60,
             onChange: function (node, data) {
                 console.log("onChange", data);
+                // Get all timeline elements
+                adjustRowHeights(61);
+                handleScheduleChange(data);
             },
             onInitRow: function (node, data) {
                 // console.log("onInitRow", data);
             },
             onClick: function (node, data) {
                 // data cell
-                // openModal();
+                openModal();
+                displayUsersWithShiftPreference(data.data.ort, checkedValues);
+                const button = createButton("Delete Shift", function () {
+                    deleteShift(data.data.id);
+                });
+                modalContent.appendChild(button);
                 console.log("onClick", data);
             },
             onAppendRow: function (node, data) {
@@ -33,9 +41,21 @@ window.addEventListener("DOMContentLoaded", async () => {
             onAppendSchedule: function (node, data) {
                 // console.log("onAppendSchedule", data);
             },
-            onScheduleClick: function (node, time, timeline) {
+            onScheduleClick: function (node, timeline, time) {
                 // empty cell
-                console.log("onScheduleClick", time + " " + timeline);
+                openModal();
+                // Create a button using the createButton function
+                const button = createButton('Add Shift', function () {
+                    // Call the function to add a shift slot
+                    addShiftSlot(timeline, time);
+                    closeModal();
+                });
+                // Append the button to the modal or any desired parent element
+                modalContent.appendChild(button);
+
+
+                console.log("onScheduleClick", node, timeline, time);
+                // addShiftSlot(timeline, time);
             },
         });
 
@@ -53,6 +73,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             groupedShiftData[slot.schicht_ort].push(slot);
         });
         // console.log(groupedShiftData);
+        let rowIndex = 0;
 
         Object.keys(groupedShiftData).forEach((schichtOrt) => {
             const shiftDataArray = groupedShiftData[schichtOrt];
@@ -97,8 +118,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
             // Initialize an array to hold rows data
             let rowsData = [];
-
-            rows.forEach((row, rowIndex) => {
+            rows.forEach((row) => {
                 // Initialize an array to hold schedule data for the current row
                 let scheduleData = [];
                 let shiftTitle = "FUCK";
@@ -146,6 +166,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                         data: {
                             id: slot.id,
                             tag: slot.schicht_tag,
+                            ort: slot.schicht_ort,
                         }, // Additional data for the slot if needed
                     };
 
@@ -167,7 +188,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             Object.keys(rowsData).forEach((row) => {
                 const fuckIT = rowsData[row][0];
                 console.log(fuckIT);
-                $("#schedule").timeSchedule("addRow", 0, {
+                $("#schedule").timeSchedule("addRow", rowIndex++, {
                     title: fuckIT.title,
                     schedule: fuckIT.schedule,
                 });
@@ -190,16 +211,21 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Get the modal
-var modal = document.getElementById("slotInfo");
-
+const modal = document.getElementById("slotInfo");
+const modalContent = document.getElementById("modal-content");
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
 
 // When the user clicks the button, open the modal
 function openModal() {
     modal.style.display = "block";
+    modalContent.innerHTML = "";
+    historyList.style = "display:none";
 }
 
+function closeModal() {
+    modal.style.display = "none";
+}
 // When the user clicks on <span> (x), close the modal
 span.onclick = function () {
     modal.style.display = "none";
@@ -243,9 +269,8 @@ function formatGantChart() {
     scTimeElements.forEach((timeElement) => {
         const timeString = timeElement.textContent;
         let hour = parseInt(timeString.split(":")[0]);
-        timeElement.textContent = `${formatHour(hour)}:${
-            timeString.split(":")[1]
-        }`;
+        timeElement.textContent = `${formatHour(hour)}:${timeString.split(":")[1]
+            }`;
     });
 
     // Iterate through each "time" element
@@ -254,9 +279,8 @@ function formatGantChart() {
         const [startTime, endTime] = timeString.split("-");
         let startHour = parseInt(startTime.split(":")[0]);
         let endHour = parseInt(endTime.split(":")[0]);
-        timeElement.textContent = `${formatHour(startHour)}:${
-            startTime.split(":")[1]
-        }-${formatHour(endHour)}:${endTime.split(":")[1]}`;
+        timeElement.textContent = `${formatHour(startHour)}:${startTime.split(":")[1]
+            }-${formatHour(endHour)}:${endTime.split(":")[1]}`;
     });
 
     // Select all elements with class "timeline"
@@ -264,14 +288,9 @@ function formatGantChart() {
         ".sc_data_scroll .timeline"
     );
 
-    // Define the desired height for each row
-    // const desiredRowHeight = "60px"; // Adjust this value as needed
+    // Get all timeline elements
+    adjustRowHeights(61);
 
-    // // Set the height for each timeline element
-    // timelineElements.forEach((timeline) =>
-    // {
-    //     timeline.style.height = desiredRowHeight;
-    // });
     // Select all elements with class 'sc_bar'
     var scBars = document.querySelectorAll(".sc_bar");
 
@@ -321,4 +340,249 @@ function formatGantChart() {
             scBar.style.backgroundColor = colorMap[schichtOrt];
         }
     });
+}
+function adjustRowHeights(px) {
+    var timelines = document.querySelectorAll(".timeline");
+
+    // Set a hardcoded height for each timeline
+    timelines.forEach(function (timeline) {
+        timeline.style.height = px + "px";
+    });
+}
+
+
+
+
+
+
+// Assuming you have a function to handle the onchange event
+function handleScheduleChange(data) {
+    const jsonData = JSON.stringify(data);
+
+    // Send updated data to server
+    fetch('/updateSchedule', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: jsonData
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Schedule updated successfully:', data);
+            fetchHistory();
+        })
+        .catch(error => {
+            console.error('Error updating schedule:', error);
+        });
+}
+
+
+// Function to fetch and display history
+async function fetchHistory() {
+    try {
+        const response = await fetch('/history');
+        const history = await response.json();
+        const historyList = document.getElementById('historyList');
+
+        // Clear previous content
+        historyList.innerHTML = '';
+
+        // Display history items
+        history.forEach(item => {
+            const listItem = document.createElement('div');
+            listItem.textContent = `ID: ${item.id}, Start Time: ${item.start_time}, End Time: ${item.end_time}`;
+            historyList.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle error scenario
+    }
+}
+
+// Fetch history when the page loads
+document.addEventListener('DOMContentLoaded', fetchHistory);
+
+// Add click event listener to undo button
+document.getElementById('undoButton').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/undo', { method: 'POST' });
+        const data = await response.json();
+        console.log(data);
+        // Update history list after undo
+        fetchHistory();
+        // Optionally update the UI or display a message to the user
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle error scenario
+    }
+});
+
+const historyButton = document.getElementById("history-button");
+historyButton.addEventListener("click", showHistory);
+function showHistory() {
+    openModal();
+    historyList.style = "display:block";
+}
+// Array to store the values of checked checkboxes
+let checkedValues = ["2"];
+
+// Get the checkboxes by their IDs
+const checkbox0 = document.getElementById('value0');
+const checkbox1 = document.getElementById('value1');
+const checkbox2 = document.getElementById('value2');
+checkbox2.checked = true;
+// Add event listener to each checkbox
+checkbox0.addEventListener('change', handleCheckboxChange);
+checkbox1.addEventListener('change', handleCheckboxChange);
+checkbox2.addEventListener('change', handleCheckboxChange);
+
+const addShiftButton = document.getElementById("add-shift-button");
+addShiftButton.addEventListener('click', addShiftSlot);
+
+// Event handler function for checkbox change
+function handleCheckboxChange(event) {
+    const value = event.target.value;
+    const isChecked = event.target.checked;
+
+    if (isChecked) {
+        // Add the value to the checkedValues array if the checkbox is checked
+        checkedValues.push(value);
+    } else {
+        // Remove the value from the checkedValues array if the checkbox is unchecked
+        const index = checkedValues.indexOf(value);
+        if (index !== -1) {
+            checkedValues.splice(index, 1);
+        }
+    }
+
+    console.log('Checked values:', checkedValues);
+
+    // Perform desired actions based on the updated array of checked values
+}
+
+// Function to fetch and display users with a specified value for schicht_ausschank
+function displayUsersWithShiftPreference(shift, checkedValues) {
+    const modalContent = document.getElementById('modal-content');
+    modalContent.innerHTML = ''; // Clear previous content
+    // Sort the checkedValues array in descending order
+    checkedValues.sort((a, b) => b - a);
+
+
+    checkedValues.forEach(preferenceValue => {
+        // Fetch users from the server for each preference value
+        fetch(`/users-with-shift-preference?column=${shift}&value=${preferenceValue}`)
+            .then(response => response.json())
+            .then(users => {
+                // Display users in the modal or any other element
+                if (modalContent) {
+                    // Proceed with updating the modal content
+                    users.forEach(user => {
+                        const userElement = document.createElement('div');
+                        userElement.textContent = `ID: ${user.id}, Name: ${user.vorname} ${user.nachname}`;
+                        modalContent.appendChild(userElement);
+                    });
+                } else {
+                    console.error('Modal content element not found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching users:', error);
+                // Handle error scenario
+            });
+    });
+
+}
+
+async function addShiftSlot(startTime, rowIndex) {
+    const confirmed = window.confirm("Are you sure you want to add this shift?");
+
+    if (!confirmed) {
+        // User clicked Cancel, exit function
+        return;
+    }
+    let formattedEndTime = (timeStringToMinutes(startTime) + 60) / 60 + ":00";
+    let data = $("#schedule").timeSchedule('timelineData');
+    console.log("add shift slot", startTime, formattedEndTime, rowIndex, data[rowIndex].title);
+    try {
+        const requestData = {
+            startTime: startTime,
+            endTime: formattedEndTime,
+            title: data[rowIndex].title,
+            day: "FR"
+            // Add more data properties as needed
+        };
+
+        const response = await fetch('/addShift', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add shift');
+        }
+
+        const responseData = await response.json();
+        const { success, message, shiftId } = responseData;
+
+        if (success) {
+            console.log(message);
+            console.log('Shift ID:', shiftId);
+            $("#schedule").timeSchedule('addSchedule', rowIndex, {
+                start: startTime,
+                end: formattedEndTime,
+                text: data[rowIndex].title + '-' + startTime,
+                data: {
+                    id: shiftId,
+                    ort: data[rowIndex].title,
+                    tag: "FR",
+                }
+            });
+            formatGantChart();
+        } else {
+            console.error('Failed to add shift:', message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle error scenario
+    }
+}
+
+function createButton(text, clickHandler) {
+    // Create a button element
+    const button = document.createElement('button');
+    button.textContent = text;
+    button.classList.add("dos-button");
+    // Add an event listener to the button
+    button.addEventListener('click', clickHandler);
+
+    return button;
+}
+
+async function deleteShift(shiftId) {
+    console.log("delete shift", shiftId);
+    // Display a confirmation dialog
+    const confirmed = window.confirm("Are you sure you want to delete this shift?");
+
+    if (!confirmed) {
+        // User clicked Cancel, exit function
+        return;
+    }
+    try {
+        const response = await fetch(`/deleteShift?id=${shiftId}`, { method: 'POST' });
+        const data = await response.json();
+        console.log(data);
+
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle error scenario
+    }
 }

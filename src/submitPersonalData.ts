@@ -8,6 +8,7 @@ const connection = createDBConnection();
 
 export function submitPersonalData(request: Request, response: Response) {
     const {
+        klarname,
         vorname,
         nachname,
         spitzname,
@@ -35,6 +36,7 @@ export function submitPersonalData(request: Request, response: Response) {
 
     // Example: Log the submitted data
     console.log("Submitted Data:", {
+        klarname,
         vorname,
         nachname,
         spitzname,
@@ -52,14 +54,16 @@ export function submitPersonalData(request: Request, response: Response) {
         tshirtSize,
         hoodieSize,
         anmerkung,
+        imagePath
     });
 
     // Insert the form data into the database
     let sql = `
         INSERT INTO aaa_user_data 
-        (userId, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        (userId, klarname, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
         ON DUPLICATE KEY UPDATE 
+        klarname = VALUES(klarname),
         vorname = VALUES(vorname), 
         nachname = VALUES(nachname), 
         spitzname = VALUES(spitzname), 
@@ -87,6 +91,7 @@ export function submitPersonalData(request: Request, response: Response) {
 
     const values = [
         customSession.userId,
+        klarname,
         vorname,
         nachname,
         spitzname,
@@ -117,6 +122,28 @@ export function submitPersonalData(request: Request, response: Response) {
         }
 
         console.log("Data inserted successfully");
-        response.redirect("/schichtwuensche");
+        // If an image was uploaded, run a second query to update userPicLink
+        if (imagePath) {
+            const sql2 = `
+                UPDATE aaa_user_data 
+                SET userPicLink = ? 
+                WHERE userId = ?
+            `;
+
+            const values2 = [imagePath, customSession.userId];
+
+            connection.query(sql2, values2, function (error, results, fields) {
+                if (error) {
+                    console.error("Error updating userPicLink:", error);
+                    response.status(500).send("Error submitting data");
+                    return;
+                }
+
+                console.log("userPicLink updated successfully");
+                response.redirect("/schichtwuensche");
+            });
+        } else {
+            response.redirect("/schichtwuensche");
+        }
     });
 }

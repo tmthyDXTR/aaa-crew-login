@@ -18,23 +18,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/userPics", express.static("userPics"));
 
-app.post("/login", function (request: Request, response: Response) {
+app.post("/login", function (request: Request, response: Response)
+{
     let userEmail: string = (request.body?.email as string) ?? "";
     let password: string = (request.body?.password as string) ?? "";
     const customSession: CustomSession = request.session as CustomSession;
 
-    if (userEmail && password) {
+    if (userEmail && password)
+    {
         connection.query(
             "SELECT * FROM aaa_users WHERE userEmail = ?",
             [userEmail],
-            function (error, results, fields) {
-                if (error) {
+            function (error, results, fields)
+            {
+                if (error)
+                {
                     console.error("Error querying user:", error);
                     response.status(500).send("Internal Server Error");
                     return;
                 }
 
-                if (results.length === 0) {
+                if (results.length === 0)
+                {
                     response
                         .status(400)
                         .send("Incorrect Email and/or Password!");
@@ -44,21 +49,25 @@ app.post("/login", function (request: Request, response: Response) {
                 const hashedPassword = results[0].userPassword;
 
                 comparePassword(password, hashedPassword)
-                    .then((isMatch) => {
-                        if (isMatch) {
+                    .then((isMatch) =>
+                    {
+                        if (isMatch)
+                        {
                             customSession.loggedin = true;
                             customSession.userEmail = userEmail;
                             customSession.userName = results[0].userName;
                             customSession.userId = results[0].userId;
                             console.log(results.userName);
                             response.redirect("/home");
-                        } else {
+                        } else
+                        {
                             response
                                 .status(400)
                                 .send("Incorrect Email and/or Password!");
                         }
                     })
-                    .catch((compareError) => {
+                    .catch((compareError) =>
+                    {
                         console.error(
                             "Error comparing passwords:",
                             compareError
@@ -67,24 +76,29 @@ app.post("/login", function (request: Request, response: Response) {
                     });
             }
         );
-    } else {
+    } else
+    {
         response.status(400).send("Please enter Email and Password!");
     }
 });
 
-app.post("/register", async function (request: Request, response: Response) {
+app.post("/register", async function (request: Request, response: Response)
+{
     // Handle registration form submission
     const regEmail: string = (request.body?.reg_email as string) ?? "";
     const regPassword: string = (request.body?.reg_password as string) ?? "";
     const regPassword2: string = (request.body?.reg_password2 as string) ?? "";
 
-    if (regEmail && regPassword) {
-        if (regPassword != regPassword2) {
+    if (regEmail && regPassword)
+    {
+        if (regPassword != regPassword2)
+        {
             response.status(400).send("Passwords do not match");
             return;
         }
 
-        try {
+        try
+        {
             // Hash the password
             const hashedPassword = await hashPassword(regPassword);
 
@@ -92,8 +106,10 @@ app.post("/register", async function (request: Request, response: Response) {
             connection.query(
                 "SELECT * FROM aaa_users WHERE userEmail = ?",
                 [regEmail],
-                async function (selectError, selectResults, selectFields) {
-                    if (selectError) {
+                async function (selectError, selectResults, selectFields)
+                {
+                    if (selectError)
+                    {
                         console.error(
                             "Error checking existing user:",
                             selectError
@@ -104,7 +120,8 @@ app.post("/register", async function (request: Request, response: Response) {
                         return;
                     }
 
-                    if (selectResults.length > 0) {
+                    if (selectResults.length > 0)
+                    {
                         // User already exists
                         response.status(400).send("Email already exists");
                         return;
@@ -114,8 +131,10 @@ app.post("/register", async function (request: Request, response: Response) {
                     connection.query(
                         "INSERT INTO aaa_users (userEmail, userPassword) VALUES (?, ?)",
                         [regEmail, hashedPassword],
-                        function (insertError, insertResults, insertFields) {
-                            if (insertError) {
+                        function (insertError, insertResults, insertFields)
+                        {
+                            if (insertError)
+                            {
                                 console.error(
                                     "Error registering user:",
                                     insertError
@@ -130,11 +149,13 @@ app.post("/register", async function (request: Request, response: Response) {
                     );
                 }
             );
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error hashing password:", error);
             response.status(500).send("Error hashing password");
         }
-    } else {
+    } else
+    {
         response
             .status(400)
             .send("Please enter Email and Password for registration");
@@ -142,20 +163,25 @@ app.post("/register", async function (request: Request, response: Response) {
 });
 
 // Define a simple login route to handle GET requests
-app.get("/login", function (request: Request, response: Response) {
+app.get("/login", function (request: Request, response: Response)
+{
     response.sendFile(path.join(__dirname, "/../public/login.html"));
 });
 
-app.get("/", function (request: Request, response: Response) {
+app.get("/", function (request: Request, response: Response)
+{
     response.sendFile(path.join(__dirname + "/../public/login.html")); // Send the login page HTML file
 });
 
-app.get("/home", function (request: Request, response: Response) {
+app.get("/home", function (request: Request, response: Response)
+{
     const customSession: CustomSession = request.session as CustomSession;
 
-    if (customSession.loggedin) {
+    if (customSession.loggedin)
+    {
         response.sendFile(path.join(__dirname, "/../public/home.html")); // Send the home page HTML file containing the form
-    } else {
+    } else
+    {
         response.send("Please login to view this page!");
     }
 });
@@ -166,18 +192,141 @@ app.post(
     submitPersonalData
 );
 
-app.get("/schichtwuensche", function (request, response) {
+app.get("/schichtwuensche", function (request, response)
+{
     // Render the shift preferences form page here
     response.sendFile(path.join(__dirname, "/../public/schichtwuensche.html"));
 });
 
+app.get("/aufbauwoche", function (request, response)
+{
+    // Render the shift preferences form page here
+    response.sendFile(path.join(__dirname, "/../public/aufbauwoche.html"));
+});
+
+// Add a new backend route to fetch shift preferences
+app.get("/fetch-aufbau-groups", function (request, response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+
+    if (!customSession.loggedin || !customSession.userId)
+    {
+        response.status(401).send("User not logged in");
+        return;
+    }
+
+    connection.query(
+        "SELECT * FROM aaa_aufbau_24",
+        [customSession.userId],
+        function (error, aufbauDataResults, fields)
+        {
+            if (error)
+            {
+                console.error("Error retrieving aufbau groups:", error);
+                response.status(500).send("Error retrieving aufbau groups");
+                return;
+            }
+
+            if (aufbauDataResults.length === 0)
+            {
+                response.status(404).send("aufbau groups not found");
+                return;
+            }
+
+            // Send the shift preferences data as JSON response
+            console.log("Fetched Data:", aufbauDataResults);
+
+            response.json(aufbauDataResults);
+        }
+    );
+});
+
+// Add a new backend route to fetch aufbau selection data
+app.get("/fetch-aufbau-selection-data", function (request, response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+
+    if (!customSession.loggedin || !customSession.userId)
+    {
+        response.status(401).send("User not logged in");
+        return;
+    }
+
+    connection.query(
+        "SELECT userId, aufbau_ids FROM aaa_user_data",
+        function (error, aufbauSelectionResults, fields)
+        {
+            if (error)
+            {
+                console.error("Error retrieving aufbau groups:", error);
+                response.status(500).send("Error retrieving aufbau selection data");
+                return;
+            }
+
+            if (aufbauSelectionResults.length === 0)
+            {
+                response.status(404).send("aufbau selection data not found");
+                return;
+            }
+
+            // Send the shift preferences data as JSON response
+            console.log("Fetched Data:", aufbauSelectionResults);
+
+            response.json([aufbauSelectionResults, customSession.userId]);
+        }
+    );
+});
+
+
+app.post(
+    "/submit-aufbau-selection",
+    async function (request: Request, response: Response)
+    {
+        const { aufbauIds } = request.body;
+        const customSession: CustomSession = request.session as CustomSession;
+
+        try
+        {
+            // Update aufbau selection of current user
+            connection.query(
+                "UPDATE aaa_user_data SET aufbau_ids = ? WHERE userId = ?",
+                [aufbauIds, customSession.userId],
+
+                function (updateError, updateResults)
+                {
+                    if (updateError)
+                    {
+                        console.error(
+                            "Error updating aufbau selection:",
+                            updateError
+                        );
+                        response
+                            .status(500)
+                            .send("Error updating aufbau selection");
+                        return;
+                    }
+
+                    response.redirect("/home"); // Redirect to login page after successful password reset
+                }
+            );
+
+        } catch (error)
+        {
+            console.error("Error updating aufbau selection:", error);
+            response.status(500).send("Error updating aufbau selection");
+        }
+    }
+);
+
 app.post("/submit-shift-preferences", submitShiftPreferences);
 
 // Add a new backend route to fetch shift preferences
-app.get("/fetch-shift-preferences", function (request, response) {
+app.get("/fetch-shift-preferences", function (request, response)
+{
     const customSession: CustomSession = request.session as CustomSession;
 
-    if (!customSession.loggedin || !customSession.userId) {
+    if (!customSession.loggedin || !customSession.userId)
+    {
         response.status(401).send("User not logged in");
         return;
     }
@@ -185,14 +334,17 @@ app.get("/fetch-shift-preferences", function (request, response) {
     connection.query(
         "SELECT * FROM aaa_user_data WHERE userId = ?",
         [customSession.userId],
-        function (error, userDataResults, fields) {
-            if (error) {
+        function (error, userDataResults, fields)
+        {
+            if (error)
+            {
                 console.error("Error retrieving user data:", error);
                 response.status(500).send("Error retrieving user data");
                 return;
             }
 
-            if (userDataResults.length === 0) {
+            if (userDataResults.length === 0)
+            {
                 response.status(404).send("User data not found");
                 return;
             }
@@ -205,9 +357,11 @@ app.get("/fetch-shift-preferences", function (request, response) {
     );
 });
 
-app.get("/fetch-user-data", function (request: Request, response: Response) {
+app.get("/fetch-user-data", function (request: Request, response: Response)
+{
     const customSession: CustomSession = request.session as CustomSession;
-    if (!customSession.loggedin || !customSession.userId) {
+    if (!customSession.loggedin || !customSession.userId)
+    {
         response.status(401).send("User not logged in");
         return;
     }
@@ -215,14 +369,17 @@ app.get("/fetch-user-data", function (request: Request, response: Response) {
     connection.query(
         "SELECT * FROM aaa_user_data WHERE userId = ?",
         [customSession.userId],
-        function (error, userDataResults, fields) {
-            if (error) {
+        function (error, userDataResults, fields)
+        {
+            if (error)
+            {
                 console.error("Error retrieving user data:", error);
                 response.status(500).send("Error retrieving user data");
                 return;
             }
 
-            if (userDataResults.length === 0) {
+            if (userDataResults.length === 0)
+            {
                 response.status(404).send("User data not found");
                 return;
             }
@@ -243,14 +400,17 @@ app.get("/fetch-user-data", function (request: Request, response: Response) {
 // Route to handle password reset request
 app.post(
     "/reset-password-request",
-    async function (request: Request, response: Response) {
+    async function (request: Request, response: Response)
+    {
         const { email } = request.body;
 
-        try {
+        try
+        {
             // Initiate password reset process
             const message = await handlePasswordResetRequest(email);
             response.status(200).send(message);
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error initiating password reset:", error);
             response.status(500).send("Error initiating password reset");
         }
@@ -260,23 +420,28 @@ app.post(
 // Define route to handle password reset page
 app.get(
     "/reset-password/:token",
-    async function (request: Request, response: Response) {
+    async function (request: Request, response: Response)
+    {
         const { token } = request.params;
 
         // Verify the token from the URL parameters against the token stored in the database
-        try {
+        try
+        {
             const isValidToken = await verifyToken(token);
 
-            if (isValidToken) {
+            if (isValidToken)
+            {
                 // Render the password reset form
                 response.sendFile(
                     path.join(__dirname, "/../public/resetPassword.html")
                 ); // Send the home page HTML file containing the form
-            } else {
+            } else
+            {
                 // Show error message or redirect to error page
                 response.status(400).send("Invalid or expired token");
             }
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error verifying token:", error);
             response.status(500).send("Internal Server Error");
         }
@@ -286,25 +451,30 @@ app.get(
 // Define route to handle password reset form submission
 app.post(
     "/reset-password/:token",
-    async function (request: Request, response: Response) {
+    async function (request: Request, response: Response)
+    {
         const { token } = request.params;
 
-        try {
+        try
+        {
             // Verify the token from the URL parameters against the token stored in the database
             const { isValid, userId, email } = await verifyToken(token);
 
-            if (isValid) {
+            if (isValid)
+            {
                 // Retrieve form data
                 const resetPassword: string = request.body.reset_password;
                 const resetPassword2: string = request.body.reset_password2;
 
                 // Check if passwords match
-                if (resetPassword !== resetPassword2) {
+                if (resetPassword !== resetPassword2)
+                {
                     response.status(400).send("Passwords do not match");
                     return;
                 }
 
-                try {
+                try
+                {
                     // Hash the new password
                     const hashedPassword = await hashPassword(resetPassword);
 
@@ -312,8 +482,10 @@ app.post(
                     connection.query(
                         "UPDATE aaa_users SET userPassword = ? WHERE userId = ?",
                         [hashedPassword, userId],
-                        function (updateError, updateResults) {
-                            if (updateError) {
+                        function (updateError, updateResults)
+                        {
+                            if (updateError)
+                            {
                                 console.error(
                                     "Error updating password:",
                                     updateError
@@ -327,35 +499,42 @@ app.post(
                             response.redirect("/login"); // Redirect to login page after successful password reset
                         }
                     );
-                } catch (error) {
+                } catch (error)
+                {
                     console.error("Error hashing password:", error);
                     response.status(500).send("Error hashing password");
                 }
-            } else {
+            } else
+            {
                 // Show error message or redirect to error page
                 response.status(400).send("Invalid or expired token");
             }
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error verifying token:", error);
             response.status(500).send("Internal Server Error");
         }
     }
 );
 
-app.listen(3000, () => {
+app.listen(3000, () =>
+{
     console.log("Server is running on port 3000");
 
-    try {
+    try
+    {
         const now = new Date();
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         console.log("Server Timezone:", timezone);
-    } catch (error) {
+    } catch (error)
+    {
         console.error("Error retrieving timezone:", error);
     }
 });
 
 // Define route to fetch Gantt data
-app.get("/fetch-gantt-data", (request: Request, response: Response) => {
+app.get("/fetch-gantt-data", (request: Request, response: Response) =>
+{
     console.log("fetch shift data");
     // Your MySQL query
     const query = `SELECT * FROM test_schichten WHERE schicht_tag = "FR"
@@ -369,12 +548,14 @@ app.get("/fetch-gantt-data", (request: Request, response: Response) => {
         schicht_ort ASC,
         start_time ASC,
         schicht_id ASC
-    LIMIT 20;`;
+    LIMIT 50;`;
 
     // Execute the query
-    connection.query(query, (err, results) => {
+    connection.query(query, (err, results) =>
+    {
 
-        if (err) {
+        if (err)
+        {
             console.error("Error executing MySQL query: " + err.stack);
             response.status(500).json({ error: "Internal server error" });
             return;
@@ -388,5 +569,214 @@ app.get("/fetch-gantt-data", (request: Request, response: Response) => {
         console.log(results);
         // Send JSON response with query results
         response.json(results);
+    });
+});
+
+// Store previous state of the data
+let history: { id: number, start_time: Date, end_time: Date }[] = [];
+
+// Route to handle schedule updates
+app.post('/updateSchedule', (request: Request, response: Response) =>
+{
+    // Extract updated schedule data from the request body
+    const updatedData: { data: { id: number }, start: string, end: string } = request.body;
+
+    // Extract the id and updated start and end times from updatedData
+    const { start, end } = updatedData;
+    const id: number = updatedData.data.id;
+    // Retrieve the current start_time and end_time from the database
+    const query = `SELECT start_time, end_time FROM test_schichten WHERE id = ?;`;
+    const values = [id];
+
+    // Execute the select query to get the current start_time and end_time
+    connection.query(query, values, (err, results) =>
+    {
+        if (err)
+        {
+            console.error("Error executing SQL SELECT query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // Store previous state
+        history.push({ id: id, start_time: results[0].start_time, end_time: results[0].end_time });
+
+        console.log(results[0]);
+        // Extract the current start_time and end_time from the results
+        const currentStartTime: Date = results[0].start_time;
+        const currentEndTime: Date = results[0].end_time;
+
+        // Extract the time part (hours and minutes) from the updated start and end times
+        const updatedStartTimeParts: string[] = start.split(':');
+        const updatedEndTimeParts: string[] = end.split(':');
+
+        // Construct the new start_time and end_time by combining the date part with the updated hours
+        const updatedStartTime: Date = new Date(currentStartTime);
+        updatedStartTime.setHours(parseInt(updatedStartTimeParts[0]), parseInt(updatedStartTimeParts[1]), 0);
+        const updatedEndTime: Date = new Date(currentEndTime);
+        updatedEndTime.setHours(parseInt(updatedEndTimeParts[0]), parseInt(updatedEndTimeParts[1]), 0);
+
+
+        // Execute SQL UPDATE statement to update the start_time and end_time
+        const updateQuery = `UPDATE test_schichten SET start_time = ?, end_time = ? WHERE id = ?;`;
+        const updateValues = [updatedStartTime, updatedEndTime, id];
+
+        // Execute the update query
+        connection.query(updateQuery, updateValues, (err, results) =>
+        {
+            if (err)
+            {
+                console.error("Error executing SQL UPDATE query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+
+            // Send success response
+            response.json({ success: true, message: 'Start and end times updated successfully' });
+        });
+    });
+});
+
+// Route to handle undo action
+app.post('/undo', (request: Request, response: Response) =>
+{
+    // Check if there is a previous state in history
+    if (history.length > 0)
+    {
+        // Retrieve the previous state from history
+        const prevState = history.pop();
+
+        // Restore the previous state in the database
+        const query = `UPDATE test_schichten SET start_time = ?, end_time = ? WHERE id = ?;`;
+        const values = [prevState?.start_time, prevState?.end_time, prevState?.id];
+
+        // Execute the update query
+        connection.query(query, values, (err, results) =>
+        {
+            if (err)
+            {
+                console.error("Error executing SQL UPDATE query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+
+            // Send success response
+            response.json({ success: true, message: 'Undo action completed successfully' });
+        });
+    } else
+    {
+        response.status(400).json({ error: "No previous state available for undo" });
+    }
+});
+
+// Route to handle fetching history
+app.get('/history', (request: Request, response: Response) =>
+{
+    // Fetch history data from wherever it's stored
+    // For example, you can fetch it from the history array
+    response.json(history);
+});
+
+
+
+// Route to handle fetching users with a specified column and value
+app.get('/users-with-shift-preference', (request: Request, response: Response) =>
+{
+    const { column, value } = request.query as { column: string, value: string };
+
+    // Define type for shift column mapping
+    type ShiftColumnMapping = {
+        [key: string]: string;
+    };
+    // Mapping of shift codes to column names
+    const shiftColumnMapping: ShiftColumnMapping = {
+        'AO': 'schicht_ausschank',
+        'AU': 'schicht_ausschank',
+        'AW': 'schicht_awareness',
+        'BSH': 'schicht_künstlerbetreuung',
+        'BSZ': 'schicht_künstlerbetreuung',
+        'EP': 'schicht_parkplatz',
+        'ES': 'schicht_parkplatz',
+        'FMS': 'schicht_flaschensammeln',
+        'HEI': 'schicht_eingangshäuschen',
+
+
+        // Add more mappings as needed
+    };
+    // Check if column is valid
+    const mappedColumn = shiftColumnMapping[column];
+    if (!mappedColumn)
+    {
+        response.status(400).json({ error: 'Invalid column name' });
+        return;
+    }
+    // Construct the SQL query dynamically
+    const query = `SELECT * FROM test_user_data WHERE ${mappedColumn} = ?;`;
+
+    connection.query(query, [value], (error, results) =>
+    {
+        if (error)
+        {
+            console.error('Error fetching users with specified column and value:', error);
+            response.status(500).json({ error: 'Internal server error' });
+        } else
+        {
+            response.json(results);
+        }
+    });
+});
+
+
+// Route to handle add shift action
+app.post('/addShift', (request: Request, response: Response) =>
+{
+    const { startTime, endTime, title, day } = request.body;
+
+    // Add shift slot to the SQL table
+    const sql = `INSERT INTO test_schichten (schicht_ort, schicht_tag, start_time, end_time) VALUES (?, ?, ?, ?)`;
+    const values = [
+        title,
+        day,
+        "2024-07-26 " + startTime + ":00",
+        "2024-07-26 " + endTime + ":00"
+    ];
+
+    // Execute the update query
+    connection.query(sql, values, (err, results) =>
+    {
+        if (err)
+        {
+            console.error("Error executing SQL INSERT query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+
+        // Retrieve the ID of the added shift
+        const shiftId = results.insertId;
+
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Add shift action completed successfully', shiftId });
+    });
+});
+
+// Route to handle delete shift action
+app.post('/deleteShift', (request: Request, response: Response) =>
+{
+    const { id } = request.query;
+
+    // Delete shift slot from the SQL table
+    const sql = `DELETE FROM test_schichten WHERE id=${id}`;
+
+    // Execute the update query
+    connection.query(sql, (err, results) =>
+    {
+        if (err)
+        {
+            console.error("Error executing SQL DELETE query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Delete shift action completed successfully', id });
     });
 });

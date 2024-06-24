@@ -378,7 +378,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
         var st = Math.ceil((data.startTime - saveData.tableStartTime) / setting.widthTime);
         var et = Math.floor((data.endTime - saveData.tableStartTime) / setting.widthTime);
-        var $bar = $('<div class="sc_bar"><span class="head"><span class="time"></span></span><span class="text"></span></div>');
+        var $bar = $('<div class="sc_bar" shiftOrt="" shiftId=""><span class="head"><span class="time"></span></span><span class="text"></span></div>');
         var stext = methods.formatTime(data.startTime);
         var etext = methods.formatTime(data.endTime);
 
@@ -400,6 +400,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
           $bar.addClass(data.class);
         } // $this.find('.sc_main').append($bar);
 
+        // Set the shiftId dynamically
+        $bar.attr('shiftId', data.data.id); // Assuming data.shiftId contains the shiftId value
+        $bar.attr('shiftOrt', data.data.ort); 
 
         var $row = $this.find('.sc_main .timeline').eq(timeline);
         $row.append($bar); // データの追加

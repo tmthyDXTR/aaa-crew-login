@@ -8,6 +8,7 @@ import { hashPassword, comparePassword } from "./passwordUtils";
 import { uploadHandler } from "./storage";
 import { submitPersonalData } from "./submitPersonalData";
 import { submitShiftPreferences } from "./submitShiftPreferences";
+import { sendMail } from "./emailService";
 
 // Create sql db connection
 const connection = createDBConnection();
@@ -57,6 +58,7 @@ app.post("/login", function (request: Request, response: Response)
                             customSession.userEmail = userEmail;
                             customSession.userName = results[0].userName;
                             customSession.userId = results[0].userId;
+                            customSession.isAdmin = results[0].isAdmin;
                             console.log(results.userName);
                             response.redirect("/home");
                         } else
@@ -162,6 +164,8 @@ app.post("/register", async function (request: Request, response: Response)
     }
 });
 
+
+
 // Define a simple login route to handle GET requests
 app.get("/login", function (request: Request, response: Response)
 {
@@ -172,6 +176,71 @@ app.get("/", function (request: Request, response: Response)
 {
     response.sendFile(path.join(__dirname + "/../public/login.html")); // Send the login page HTML file
 });
+
+app.get("/send-mail-tool", function (request: Request, response: Response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+   
+    if (customSession.loggedin && customSession.isAdmin)
+    {
+        response.sendFile(path.join(__dirname, "/../public/sendMailTool.html")); // Send the home page HTML file containing the form
+    } else
+    {
+        response.send("Please login as admin to view this page!");
+    }
+});
+
+app.post(
+    "/send-email",
+    async function (request: Request, response: Response) {
+        // Your send mail logic here
+        try {
+            const  emailAddresses: string = (request.body?.email_addresses as string) ?? "";
+            const  emailSubject: string = (request.body?.email_subject as string) ?? "";
+            const emailContent: string = (request.body?.email_content as string) ?? "";
+            await sendMail({ to: emailAddresses, subject: emailSubject, text: emailContent });
+            response.send('Email sent successfully');
+        } catch (error) {
+            response.status(500).send('Error sending email');
+        }
+    }
+);
+
+app.get("/fetch-all-user-data", function (request: Request, response: Response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+   
+    if (customSession.loggedin && customSession.isAdmin)
+    {
+        connection.query(
+            "SELECT * FROM aaa_user_data",
+            function (error, results, fields)
+            {
+                if (error)
+                {
+                    console.error("Error retrieving all user Data:", error);
+                    response.status(500).send("Error retrieving all user Data");
+                    return;
+                }
+    
+                if (results.length === 0)
+                {
+                    response.status(404).send("all user Data not found");
+                    return;
+                }
+    
+                // Send the all user Data as JSON response
+                console.log("Fetched all user Data:", results);
+    
+                response.json(results);
+            }
+        );
+    } else
+    {
+        response.send("Please login as admin to view this page!");
+    }
+});
+
 
 app.get("/home", function (request: Request, response: Response)
 {
@@ -203,6 +272,8 @@ app.get("/aufbauwoche", function (request, response)
     // Render the shift preferences form page here
     response.sendFile(path.join(__dirname, "/../public/aufbauwoche.html"));
 });
+
+
 
 // Add a new backend route to fetch shift preferences
 app.get("/fetch-aufbau-groups", function (request, response)
@@ -331,71 +402,137 @@ app.get("/fetch-shift-preferences", function (request, response)
         return;
     }
 
+    // Fetch shift preferences for the logged-in user
     connection.query(
         "SELECT * FROM aaa_user_data WHERE userId = ?",
         [customSession.userId],
-        function (error, userDataResults, fields)
-        {
-            if (error)
-            {
+        function (error, userDataResults) {
+            if (error) {
                 console.error("Error retrieving user data:", error);
                 response.status(500).send("Error retrieving user data");
                 return;
             }
 
-            if (userDataResults.length === 0)
-            {
+            if (userDataResults.length === 0) {
                 response.status(404).send("User data not found");
                 return;
             }
 
-            // Send the shift preferences data as JSON response
-            console.log("Fetched Data:", userDataResults[0]);
+            const userShiftPreferences = userDataResults[0];
 
-            response.json(userDataResults[0]);
+            // Fetch userIds, vorname, and nachname for all users
+            connection.query(
+                "SELECT userId, vorname, nachname, klarname FROM aaa_user_data ORDER BY userId ASC",
+                function (error, allUsersResults) {
+                    if (error) {
+                        console.error("Error retrieving all users data:", error);
+                        response.status(500).send("Error retrieving all users data");
+                        return;
+                    }
+
+                    const usersInfo = allUsersResults.map((user: { userId: number; vorname: string; nachname: string; klarname: number; }) => {
+                        if (user.klarname === 1) {
+                            return {
+                                userId: user.userId,
+                                vorname: user.vorname,
+                                nachname: user.nachname
+                            };
+                        } else {
+                            return {
+                                userId: user.userId,
+                                vorname: "",
+                                nachname: "",
+                            };
+                        }
+                    });
+
+                    // Combine the results and send as JSON response
+                    response.json({
+                        userShiftPreferences: userShiftPreferences,
+                        allUsersInfo: usersInfo
+                    });
+                }
+            );
         }
     );
 });
 
-app.get("/fetch-user-data", function (request: Request, response: Response)
-{
+app.get("/fetch-user-data", function (request: Request, response: Response) {
     const customSession: CustomSession = request.session as CustomSession;
-    if (!customSession.loggedin || !customSession.userId)
-    {
+    if (!customSession.loggedin || !customSession.userId) {
         response.status(401).send("User not logged in");
         return;
     }
 
     connection.query(
-        "SELECT * FROM aaa_user_data WHERE userId = ?",
+        `   SELECT u.*, ud.isAdmin
+            FROM aaa_user_data AS u
+            JOIN aaa_users AS ud ON u.userId = ud.userId
+            WHERE u.userId = ?`,
         [customSession.userId],
-        function (error, userDataResults, fields)
-        {
-            if (error)
-            {
+        function (error, userDataResults, fields) {
+            if (error) {
                 console.error("Error retrieving user data:", error);
                 response.status(500).send("Error retrieving user data");
                 return;
             }
 
-            if (userDataResults.length === 0)
-            {
-                response.status(404).send("User data not found");
-                return;
+            if (userDataResults.length === 0) {
+                // No user data found, insert an empty entry
+                const emptyEntry = {
+                    userId: customSession.userId,
+                    // Add other fields with default or empty values as necessary
+                    // e.g., name: '', email: '', etc.
+                };
+                connection.query(
+                    "INSERT INTO aaa_user_data SET ?",
+                    emptyEntry,
+                    function (insertError, insertResults, insertFields) {
+                        if (insertError) {
+                            console.error("Error inserting empty user data:", insertError);
+                            response.status(500).send("Error inserting empty user data");
+                            return;
+                        }
+                        // Successfully inserted empty entry, fetch the newly inserted data
+                        connection.query(
+                            `   SELECT u.*, ud.isAdmin
+                            FROM aaa_user_data AS u
+                            JOIN aaa_users AS ud ON u.userId = ud.userId
+                            WHERE u.userId = ?`,
+                            [customSession.userId],
+                            function (fetchError, newUserDataResults, fetchFields) {
+                                if (fetchError) {
+                                    console.error("Error retrieving newly inserted user data:", fetchError);
+                                    response.status(500).send("Error retrieving newly inserted user data");
+                                    return;
+                                }
+
+                                let geburtstdatum = new Date(newUserDataResults[0].geburtstdatum);
+                                geburtstdatum.setDate(geburtstdatum.getDate() + 1);
+                                const formattedUserData = {
+                                    ...newUserDataResults[0], // Shallow copy of the user data object
+                                    geburtstdatum: geburtstdatum.toISOString().split("T")[0], // Extract YYYY-MM-DD part
+                                };
+                                console.log("Fetched Data:", { formattedUserData });
+                                response.json(formattedUserData);
+                            }
+                        );
+                    }
+                );
+            } else {
+                let geburtstdatum = new Date(userDataResults[0].geburtstdatum);
+                geburtstdatum.setDate(geburtstdatum.getDate() + 1);
+                const formattedUserData = {
+                    ...userDataResults[0], // Shallow copy of the user data object
+                    geburtstdatum: geburtstdatum.toISOString().split("T")[0], // Extract YYYY-MM-DD part
+                };
+                console.log("Fetched Data:", { formattedUserData });
+                response.json(formattedUserData);
             }
-            console.log("Fetched Data:", userDataResults);
-            let geburtstdatum = new Date(userDataResults[0].geburtstdatum);
-            geburtstdatum.setDate(geburtstdatum.getDate() + 1);
-            // Format the date string
-            const formattedUserData = {
-                ...userDataResults[0], // Shallow copy of the user data object
-                geburtstdatum: geburtstdatum.toISOString().split("T")[0], // Extract YYYY-MM-DD part
-            };
-            console.log("Fetched Data:", { formattedUserData });
-            response.json(formattedUserData);
         }
     );
 });
+
 
 // Route to handle password reset request
 app.post(
@@ -710,7 +847,24 @@ app.get('/users-with-shift-preference', (request: Request, response: Response) =
         return;
     }
     // Construct the SQL query dynamically
-    const query = `SELECT * FROM test_user_data WHERE ${mappedColumn} = ?;`;
+    const query = `
+        SELECT 
+            u.*,
+            COALESCE(s.schichten_count, 0) AS schichten_count
+        FROM 
+            aaa_user_data u
+        LEFT JOIN (
+            SELECT 
+                user_id,
+                COUNT(*) AS schichten_count
+            FROM 
+                test_schichten_slots
+            GROUP BY 
+                user_id
+        ) s ON u.userId = s.user_id
+        WHERE 
+            ${mappedColumn} = ?;
+    `;
 
     connection.query(query, [value], (error, results) =>
     {
@@ -780,3 +934,163 @@ app.post('/deleteShift', (request: Request, response: Response) =>
         response.json({ success: true, message: 'Delete shift action completed successfully', id });
     });
 });
+
+app.post("/add-user-to-shift", addUserToShift);
+
+app.post("/remove-user-from-shift", removeUserFromShift);
+
+function addUserToShift(request: Request, response: Response) {
+    const { shiftId } = request.query;
+    const { userId } = request.query;
+    // Add user to shift slot to the SQL table
+    const sql = `INSERT INTO test_schichten_slots (test_schichten_id, user_id) VALUES (?, ?)`;
+    const values = [
+        shiftId,
+        userId
+    ];
+
+    // Execute the INSERT query
+    connection.query(sql, values, (err, results) =>
+    {
+        if (err)
+        {
+            console.error("Error executing SQL INSERT query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Add user to shift slot completed successfully', shiftId, userId });
+    });
+}
+
+function removeUserFromShift(request: Request, response: Response) {
+    const { shiftId } = request.query;
+    const { userId } = request.query;
+
+    // Delete user from shift slot from the SQL table
+    const sql = `DELETE FROM test_schichten_slots WHERE test_schichten_id=${shiftId}`;
+
+    // Execute the update query
+    connection.query(sql, (err, results) =>
+    {
+        if (err)
+        {
+            console.error("Error executing SQL DELETE query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+
+        // Send success response with the ID of the added shift
+        response.json({ success: true, message: 'Delete user from shift slot action completed successfully', shiftId, userId });
+    });
+}
+
+// Define route to fetch Gantt data
+app.get("/fetch-shift-data-by-id", (request: Request, response: Response) =>
+{
+    const { shiftId } = request.query;
+
+    console.log("fetch-shift-data-by-id");
+    // Your MySQL query
+    const query = `
+        SELECT 
+            tss.*, 
+            aud.*, 
+            (SELECT COUNT(*) 
+             FROM test_schichten_slots tss_inner 
+             WHERE tss_inner.user_id = tss.user_id) AS schichten_anzahl
+        FROM 
+            test_schichten_slots tss
+        JOIN 
+            aaa_user_data aud 
+        ON 
+            tss.user_id = aud.userId
+        WHERE 
+            tss.test_schichten_id = ${shiftId}`;
+
+
+    // Execute the query
+    connection.query(query, (err, results) =>
+    {
+
+        if (err)
+        {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
+});
+
+// Define route to fetch Gantt data
+app.get("/fetch-all-filled-slots", (request: Request, response: Response) =>
+{ 
+    console.log("fetch-all-filled-slots");
+    // Your MySQL query
+    const query = `SELECT * FROM test_schichten_slots`;
+
+    // Execute the query
+    connection.query(query, (err, results) =>
+    {
+
+        if (err)
+        {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
+});
+
+app.get("/crews-overview", function (request: Request, response: Response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+
+    if (customSession.loggedin)
+    {
+        response.sendFile(path.join(__dirname, "/../public/crews-overview.html")); // Send the home page HTML file containing the form
+    } else
+    {
+        response.send("Please login to view this page!");
+    }
+});
+
+// Define route to fetch aufbau crews
+app.get("/fetch-aufbau-crews-data", (request: Request, response: Response) =>
+{ 
+    const customSession: CustomSession = request.session as CustomSession;
+    if (!customSession.loggedin) {
+        response.status(400).json({ error: "Login to view crews" });
+        
+        return;
+    }
+    console.log("fetch-aufbau-crews");
+    const userId = customSession.userId;  // Get the logged in user's ID
+
+    const query = `
+        SELECT aud.*, aa.aufbau_id, aa.aufbau_name, aa.aufbau_wann, aa.aufbau_wieviel, aa.aufbau_verantwortlich_user_id, aa.aufbau_verantwortlich, aa.aufbau_verantwortlich_kontakt, aa.date
+        FROM aaa_user_data aud
+        JOIN aaa_aufbau_24 aa
+        ON CONCAT(',', aud.aufbau_ids, ',') LIKE CONCAT('%,', aa.aufbau_id, ',%')
+        WHERE aa.aufbau_verantwortlich_user_id = ?;
+    `;
+
+    // Execute the query
+    connection.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        console.log(results);
+        response.json(results);
+    });
+
+});
+

@@ -36,36 +36,34 @@ function submitPersonalData(request, response) {
     });
     // Insert the form data into the database
     let sql = `
-        INSERT INTO aaa_user_data 
-        (userId, klarname, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-        ON DUPLICATE KEY UPDATE 
-        klarname = VALUES(klarname),
-        vorname = VALUES(vorname), 
-        nachname = VALUES(nachname), 
-        spitzname = VALUES(spitzname), 
-        geburtstdatum = VALUES(geburtstdatum), 
-        handynr = VALUES(handynr), 
-        wieOftDabei = VALUES(wieOftDabei), 
-        essen = VALUES(essen),
-        ordner = VALUES(ordner),
-        kurier = VALUES(kurier),
-        aufbau = VALUES(aufbau),
-        festival = VALUES(festival),
-        schicht = VALUES(schicht),
-        abbau = VALUES(abbau),
-        veteranen = VALUES(veteranen),
-        tshirtSize = VALUES(tshirtSize),
-        hoodieSize = VALUES(hoodieSize),
-        anmerkung = VALUES(anmerkung)
-    `;
+        UPDATE aaa_user_data
+        SET
+            klarname = ?,
+            vorname = ?,
+            nachname = ?,
+            spitzname = ?,
+            geburtstdatum = ?,
+            handynr = ?,
+            wieOftDabei = ?,
+            essen = ?,
+            ordner = ?,
+            kurier = ?,
+            aufbau = ?,
+            festival = ?,
+            schicht = ?,
+            abbau = ?,
+            veteranen = ?,
+            tshirtSize = ?,
+            hoodieSize = ?,
+            anmerkung = ?
+        WHERE userId = ?;
+        `;
     // Check if an image was uploaded
     if (imagePath) {
         // If an image was uploaded, include it in the query
         sql += ", userPicLink = ?";
     }
     const values = [
-        customSession.userId,
         klarname,
         vorname,
         nachname,
@@ -84,6 +82,7 @@ function submitPersonalData(request, response) {
         tshirtSize,
         hoodieSize,
         anmerkung,
+        customSession.userId,
     ];
     // If an image was uploaded, append its path to the values array
     if (imagePath) {

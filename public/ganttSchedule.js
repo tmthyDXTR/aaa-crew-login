@@ -1,3 +1,6 @@
+var isHoverActivated = true;
+const overlay = document.getElementById("overlay");
+
 window.addEventListener("DOMContentLoaded", async () => {
     try {
         console.log("try to load shift data");
@@ -27,12 +30,52 @@ window.addEventListener("DOMContentLoaded", async () => {
             },
             onClick: function (node, data) {
                 // data cell
-                openModal();
-                displayUsersWithShiftPreference(data.data.ort, checkedValues);
+                // openModal();
+                displaySelectedUser(data.data.id);
+                overlay.style = "display:block";
+                displayUsersWithShiftPreference(data.data.ort, checkedValues)
+                .then(() => {
+                    console.log('Users have been displayed.');
+                    console.log('Add buttons to user rows.');
+                    // Get all elements with the class 'user-row'
+                    const userRows = document.querySelectorAll('.user-row');
+
+                    userRows.forEach(userRow => {
+                        const addButton = document.createElement('button');
+                        addButton.textContent = "+";
+                        addButton.classList.add("dos-button");
+
+                        const userId = userRow.getAttribute('data-user-id');
+                        // Add click handler to the button
+                        addButton.addEventListener('click', () => {
+                            addUserToShift(data.data.id, userId);
+                            displaySelectedUser(data.data.id);
+                        });
+                        const removeButton = document.createElement('button');
+                        removeButton.textContent = "-";
+                        removeButton.classList.add("dos-button");
+                        // Add click handler to the button
+                        removeButton.addEventListener('click', () => {
+                            removeUserFromShift(data.data.id, userId);
+                            displaySelectedUser(data.data.id);
+                        });
+
+                        // Append the button to the user row
+                        userRow.appendChild(addButton);
+                        userRow.appendChild(removeButton);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error displaying users:', error);
+                });
+
                 const button = createButton("Delete Shift", function () {
                     deleteShift(data.data.id);
                 });
-                modalContent.appendChild(button);
+                modalMenu.appendChild(button);
+                // Add add and remove to/from shift buttons for each user
+
+
                 console.log("onClick", data);
             },
             onAppendRow: function (node, data) {
@@ -51,7 +94,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                     closeModal();
                 });
                 // Append the button to the modal or any desired parent element
-                modalContent.appendChild(button);
+                modalMenu.appendChild(button);
 
 
                 console.log("onScheduleClick", node, timeline, time);
@@ -205,6 +248,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
 
         formatGantChart();
+
+        // Call the function to add the event listeners
+        addHoverListeners();
+       
+        const showFilledSlotsButton = document.getElementById("show-filled-slots-button");
+        showFilledSlotsButton.addEventListener('click', toggleFilledSlots);
     } catch {
         console.log("fetch failed horribly");
     }
@@ -212,14 +261,16 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // Get the modal
 const modal = document.getElementById("slotInfo");
-const modalContent = document.getElementById("modal-content");
+const modalUserList = document.getElementById("modal-user-list");
+const modalMenu = document.getElementById("modal-menu");
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
 
 // When the user clicks the button, open the modal
 function openModal() {
     modal.style.display = "block";
-    modalContent.innerHTML = "";
+    modalUserList.innerHTML = "";
+    modalMenu.innerHTML = "";
     historyList.style = "display:none";
 }
 
@@ -466,37 +517,72 @@ function handleCheckboxChange(event) {
     // Perform desired actions based on the updated array of checked values
 }
 
-// Function to fetch and display users with a specified value for schicht_ausschank
-function displayUsersWithShiftPreference(shift, checkedValues) {
-    const modalContent = document.getElementById('modal-content');
+// Async function to fetch and display users with a specified value for schicht_ausschank
+async function displayUsersWithShiftPreference(shift, checkedValues) {
+    const modalContent = document.getElementById('modal-user-list');
     modalContent.innerHTML = ''; // Clear previous content
+    const crewList = document.getElementById("crew-list-items");
+    crewList.innerHTML = '';
     // Sort the checkedValues array in descending order
     checkedValues.sort((a, b) => b - a);
 
+    for (const preferenceValue of checkedValues) {
+        try {
+            // Fetch users from the server for each preference value
+            const response = await fetch(`/users-with-shift-preference?column=${shift}&value=${preferenceValue}`);
+            const users = await response.json();
+            console.log(users);
+            // Display users in the modal or any other element
+            if (modalContent) {
+                // Proceed with updating the modal content
+                users.forEach(user => {
+                    // Create a new div element with class "user-row"
+                    const userRow = document.createElement('div');
+                    userRow.className = 'user-row';
+                    userRow.setAttribute('data-user-id', user.userId);
 
-    checkedValues.forEach(preferenceValue => {
+                    // Create a user element and set its text content
+                    const userElement = document.createElement('div');
+                    userElement.textContent = `ID: ${user.userId}, Name: ${user.vorname} ${user.nachname} _ ${user.schichten_count} FR ${user.fr_da_ab}-${user.fr_da_bis} SA ${user.sa_da_ab}-${user.sa_da_bis} SO ${user.so_da_ab}-${user.so_da_bis}`;
+
+                    const line = document.createElement('hr');
+                    userRow.appendChild(line);
+                    // Append the user element to the user row
+                    userRow.appendChild(userElement);
+
+                    // Append the user row to the modal content
+                    modalContent.appendChild(userRow);
+                    crewList.appendChild(userRow);
+                });
+            } else {
+                console.error('Modal content element not found.');
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            // Handle error scenario
+        }
+    }
+}
+
+async function displaySelectedUser(shiftId) {
+    try {
         // Fetch users from the server for each preference value
-        fetch(`/users-with-shift-preference?column=${shift}&value=${preferenceValue}`)
-            .then(response => response.json())
-            .then(users => {
-                // Display users in the modal or any other element
-                if (modalContent) {
-                    // Proceed with updating the modal content
-                    users.forEach(user => {
-                        const userElement = document.createElement('div');
-                        userElement.textContent = `ID: ${user.id}, Name: ${user.vorname} ${user.nachname}`;
-                        modalContent.appendChild(userElement);
-                    });
-                } else {
-                    console.error('Modal content element not found.');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching users:', error);
-                // Handle error scenario
-            });
-    });
+        const response = await fetch(`/fetch-shift-data-by-id?shiftId=${shiftId}`);
+        const shiftData = await response.json();
+        const selectedUserRow = document.getElementById("modal-selected-user");
+        selectedUserRow.innerHTML = "";
+        console.log(shiftData[0]);
+        // Display users in the modal or any other element
+        if (shiftData[0]) {
+            selectedUserRow.innerHTML = `${shiftData[0].user_id}, ${shiftData[0].vorname} ${shiftData[0].nachname}`;
 
+        } else {
+            console.error('fetching selected user not found.');
+        }
+    } catch (error) {
+        console.error('Error fetching selected user:', error);
+        // Handle error scenario
+    }
 }
 
 async function addShiftSlot(startTime, rowIndex) {
@@ -586,3 +672,101 @@ async function deleteShift(shiftId) {
         // Handle error scenario
     }
 }
+
+async function addUserToShift(shiftId, userId) {
+    console.log("addUserToShift", shiftId, userId);
+    try {
+        const response = await fetch(`/add-user-to-shift?shiftId=${shiftId}&userId=${userId}`, { method: 'POST' });
+        const data = await response.json();
+        console.log(data);
+        if (filledToggleIsActive) {
+            colorFilledSlots();
+        }
+
+    } catch (error) {
+        console.error('Error adding user to shift:', error);
+        // Handle error scenario
+    }
+}
+
+async function removeUserFromShift(shiftId, userId=null) {
+    console.log("removeUserFromShift", shiftId, userId);
+    try {
+        const response = await fetch(`/remove-user-from-shift?shiftId=${shiftId}&userId=${userId}`, { method: 'POST' });
+        const data = await response.json();
+        console.log(data);
+        if (filledToggleIsActive) {
+            colorFilledSlots();
+        }
+
+    } catch (error) {
+        console.error('Error removing user from shift:', error);
+        // Handle error scenario
+    }
+}
+var filledToggleIsActive = false;
+
+async function toggleFilledSlots() {
+    filledToggleIsActive = !filledToggleIsActive;
+    if (filledToggleIsActive) {
+        console.log("toggleFilledSlots");
+        try {
+            colorFilledSlots();
+    
+    
+        } catch (error) {
+            console.error('Error toggleFilledSlots:', error);
+            // Handle error scenario
+        }
+    }
+    else {
+        formatGantChart();
+    }
+}
+
+async function colorFilledSlots() {
+    // Fetch shift preferences data
+    const response = await fetch('/fetch-all-filled-slots');
+    const data = await response.json();
+    console.log(data);
+    const scheduleData = $("#schedule").timeSchedule('scheduleData');
+    // console.log(scheduleData);
+
+    // Create a set of schedule data IDs for quick lookup
+    const scheduleIds = new Set(data.map(d => d.test_schichten_id));
+    console.log(scheduleIds);
+    document.querySelectorAll('.sc_bar').forEach(function(bar) {
+        var shiftId = parseInt(bar.getAttribute('shiftid'));
+        bar.style.backgroundColor = 'grey';
+        if (scheduleIds.has(shiftId)) {
+            bar.style.backgroundColor = 'green';
+        }
+    });
+}
+
+// Function to add hover event listeners to all sc_bar elements
+function addHoverListeners() {
+    // Get all elements with the class 'sc_bar'
+    const bars = document.querySelectorAll('.sc_bar');
+
+    // Add a mouseover event listener to each sc_bar element
+    bars.forEach(bar => {
+        bar.addEventListener('mouseover', function() {
+            if (isHoverActivated) {
+                const shiftOrt = this.getAttribute('shiftOrt');
+                const shiftId = this.getAttribute('shiftId');
+                // Log the shiftId attribute of the hovered element
+                // console.log(this.getAttribute('shiftid'));
+                // console.log(this.getAttribute('shiftOrt'));
+                displayUsersWithShiftPreference(shiftOrt, checkedValues);
+                // formatGantChart();
+            }
+            
+        });
+    });
+
+    overlay.addEventListener("click", () => {
+        overlay.style = "display:none";
+    })
+}
+

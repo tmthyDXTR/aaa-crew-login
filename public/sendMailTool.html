@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AAA 2024 Crew Send Mail Tool</title>
+
+    <link href="/css/style.css" rel="stylesheet" type="text/css" />
+
+    <style>
+       
+    </style>
+</head>
+
+<body>
+
+    <div class="form-wrap">
+        <div class="dither-effect-container">
+            <img src="img/aaa-figur_weiss.png" alt="AAA Figur" class="dither-effect" />
+        </div>
+        <h1>Send Mail Tool</h1>
+        <center><img src="img/loader_pacman.gif" alt="pacman" class="loader-icon" id="loader-icon" style="display:none;"></center>
+
+        <form id="send-mail-form" action="/send-email" method="POST">
+            <div class="">
+                <label for="email-addresses">Email Addresses</label>
+                <input type="text" class="email-addresses-input" id="email-addresses" name="email_addresses" placeholder="Enter one or multiple email addresses" />
+            </div>
+            <div class="">
+                <label for="email-subject">Email Subject</label>
+                <input type="text" class="email-addresses-input" id="email-subject" name="email_subject" placeholder="Enter email subject" />
+            </div>
+            <div class="input-container">
+                <label for="email-content">Email Content</label>
+                <textarea id="email-content" name="email_content" rows="15" placeholder="Enter your email content"></textarea>
+            </div>
+
+            <div class="submit-bottom-container">
+                <input type="submit" class="dos-button deactivated" id="submit-button" value="SEND MAIL" disabled />
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
+<script src="/sendMailTool.js"></script>
+
+<script>
+    const emailInput = document.getElementById('email-addresses');
+    const subjectInput = document.getElementById('email-subject');
+    const contentInput = document.getElementById('email-content');
+    const submitButton = document.getElementById('submit-button');
+
+    function checkInputs() {
+        if (emailInput.value.trim() && contentInput.value.trim()) {
+            submitButton.disabled = false;
+            submitButton.classList.remove("deactivated");
+        } else {
+            submitButton.disabled = true;
+            submitButton.classList.add("deactivated");
+        }
+    }
+
+    emailInput.addEventListener('input', checkInputs);
+    contentInput.addEventListener('input', checkInputs);
+
+
+    // document.getElementById('send-mail-form').addEventListener('submit', function(event) {
+    //     event.preventDefault();
+    //     document.getElementById('loader-icon').style.display = 'block';
+    //     submitButton.disabled = true;
+    //     submitButton.classList.add("deactivated");
+
+    //     // Add your form submission logic here
+
+    //     setTimeout(() => {
+    //         document.getElementById('loader-icon').style.display = 'none';
+    //         submitButton.disabled = false;
+    //         submitButton.classList.remove("deactivated");
+
+    //         alert('Mail sent successfully!');
+    //     }, 2000);
+    // });
+
+</script>

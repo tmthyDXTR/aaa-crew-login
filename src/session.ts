@@ -8,6 +8,7 @@ interface CustomSession extends SessionData {
     userEmail?: string;
     userName?: string;
     userId?: number;
+    isAdmin?: number;
 }
 
 // Extend MemoryStore to accept CustomSession

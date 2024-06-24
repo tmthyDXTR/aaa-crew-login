@@ -59,29 +59,28 @@ export function submitPersonalData(request: Request, response: Response) {
 
     // Insert the form data into the database
     let sql = `
-        INSERT INTO aaa_user_data 
-        (userId, klarname, vorname, nachname, spitzname, geburtstdatum, handynr, wieOftDabei, essen, ordner, kurier, aufbau, festival, schicht, abbau, veteranen, tshirtSize, hoodieSize, anmerkung) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-        ON DUPLICATE KEY UPDATE 
-        klarname = VALUES(klarname),
-        vorname = VALUES(vorname), 
-        nachname = VALUES(nachname), 
-        spitzname = VALUES(spitzname), 
-        geburtstdatum = VALUES(geburtstdatum), 
-        handynr = VALUES(handynr), 
-        wieOftDabei = VALUES(wieOftDabei), 
-        essen = VALUES(essen),
-        ordner = VALUES(ordner),
-        kurier = VALUES(kurier),
-        aufbau = VALUES(aufbau),
-        festival = VALUES(festival),
-        schicht = VALUES(schicht),
-        abbau = VALUES(abbau),
-        veteranen = VALUES(veteranen),
-        tshirtSize = VALUES(tshirtSize),
-        hoodieSize = VALUES(hoodieSize),
-        anmerkung = VALUES(anmerkung)
-    `;
+        UPDATE aaa_user_data
+        SET
+            klarname = ?,
+            vorname = ?,
+            nachname = ?,
+            spitzname = ?,
+            geburtstdatum = ?,
+            handynr = ?,
+            wieOftDabei = ?,
+            essen = ?,
+            ordner = ?,
+            kurier = ?,
+            aufbau = ?,
+            festival = ?,
+            schicht = ?,
+            abbau = ?,
+            veteranen = ?,
+            tshirtSize = ?,
+            hoodieSize = ?,
+            anmerkung = ?
+        WHERE userId = ?;
+        `;
 
     // Check if an image was uploaded
     if (imagePath) {
@@ -90,7 +89,6 @@ export function submitPersonalData(request: Request, response: Response) {
     }
 
     const values = [
-        customSession.userId,
         klarname,
         vorname,
         nachname,
@@ -109,6 +107,7 @@ export function submitPersonalData(request: Request, response: Response) {
         tshirtSize,
         hoodieSize,
         anmerkung,
+        customSession.userId,
     ];
     // If an image was uploaded, append its path to the values array
     if (imagePath) {

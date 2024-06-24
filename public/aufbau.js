@@ -7,7 +7,7 @@ async function fetchAufbauGroups()
         const response = await fetch('/fetch-aufbau-groups');
         const data = await response.json();
 
-        console.log("Aufbau data:", JSON.stringify(data));
+        //console.log("Aufbau data:", JSON.stringify(data));
         // Populate form fields with shift preferences data
         // Replace 'input[name=...]', 'select[name=...]', etc. with actual selectors for your form fields
 
@@ -67,7 +67,7 @@ async function fetchAufbauSelectionData()
         const response = await fetch('/fetch-aufbau-selection-data');
         const data = await response.json();
 
-        console.log("aufbau selection data:", JSON.stringify(data));
+        //console.log("aufbau selection data:", JSON.stringify(data));
         // Populate form fields with shift preferences data
         // Replace 'input[name=...]', 'select[name=...]', etc. with actual selectors for your form fields
 
@@ -78,7 +78,7 @@ async function fetchAufbauSelectionData()
         {
             if (data[1] == userData.userId)
             {
-                console.log("userData", userData.aufbau_ids);
+                //console.log("userData", userData.aufbau_ids);
                 // Extract the aufbau_ids string from the JSON object
                 const idsString = userData.aufbau_ids;
                 // Split the string into an array of IDs
@@ -110,6 +110,7 @@ async function fetchAufbauSelectionData()
                 countCell.textContent = aufbauCounts[id] || 0;
             });
         });
+
     } catch (error)
     {
         console.error('Error fetching aufbau selection data:', error);
@@ -123,13 +124,20 @@ window.addEventListener('DOMContentLoaded', function ()
 {
     // Call fetchAufbauGroups function when the page is loaded
     fetchAufbauGroups();
-    // Fetch and update aufbau selection
-    fetchAufbauSelectionData();
+    this.setTimeout(() => {
+        fetchAufbauSelectionData();
+        this.document.getElementById("aufbauTable").style = "display:block";
+        let submitBtn = document.getElementById("submit-button");
+        submitBtn.classList.remove("deactivated");
+        submitBtn.disabled = false;
+        document.getElementById("loader-icon").style = "display:none";
+    }, 999);   
+
 
     let saveBtn = document.getElementById("submit-button");
     saveBtn.addEventListener("click", function (event)
     {
-        console.log("save aufbau selection");
+        //console.log("save aufbau selection");
         // Get all selected checkboxes
         const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
         const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.id);
@@ -148,7 +156,7 @@ window.addEventListener('DOMContentLoaded', function ()
         {
             if (response.ok)
             {
-                console.log('Aufbau selection updated successfully.');
+                //console.log('Aufbau selection updated successfully.');
                 // Redirect to home page after successful update
                 window.location.href = '/home';
             } else

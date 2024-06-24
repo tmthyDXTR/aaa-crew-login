@@ -12,7 +12,7 @@
 }
 
 body {
-    font-family: "VT323", monospace;
+    font-family: "VT323", monospace !important;
     background: linear-gradient(135deg, #190627, #e9446f, #16acab, #190627);
     margin: 0;
     padding: 0;
@@ -147,6 +147,13 @@ h4 {
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    white-space: normal; /* Allow text to wrap */
+    word-wrap: break-word; /* Break words if necessary */
+}
+
+.deactivated {
+    border: 2px solid grey !important;
+    color: grey !important;
 }
 
 .dos-button:hover {
@@ -271,6 +278,23 @@ input {
     font-family: "VT323", monospace;
     font-size: 30px;
     width: 80%;
+    text-align: left;
+    /* margin-left: 2vw; */
+    /* padding-left: 2vw; */
+}
+
+.email-addresses-input {
+    width: 100% !important;
+}
+
+textarea {
+    background-color: var(--bg-color);
+    border-color: var(--main-color);
+    border-width: 2px !important;
+    color: var(--sec-color);
+    font-family: "VT323", monospace;
+    font-size: 30px;
+    width: 100%;
     text-align: left;
     /* margin-left: 2vw; */
     /* padding-left: 2vw; */
@@ -497,3 +521,49 @@ h2 {
         text-align: left;
     }
 }
+
+.loader-icon {
+    
+}
+
+/* Custom Styles */
+.select2-container--default .select2-selection--multiple {
+    background-color: var(--bg-color);
+    border: 2px solid var(--main-color) !important;
+    min-height: 38px;
+  }
+  .select2-container .select2-search--inline .select2-search__field {
+    font-family: "VT323", monospace !important;
+  }
+
+  .select2-search__field {
+    background-color: var(--bg-color);
+    border: 2px solid var(--main-color);
+  }
+  
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--main-color);
+    border: 1px solid var(--main-color);
+    color: white;
+    padding: 2px 10px;
+    margin: 4px 2px;
+  }
+  
+  .select2-results {
+    background-color: var(--bg-color);
+
+  }
+  .select2-selection__clear {
+    color: var(--sec-color) !important;
+  }
+  .select2-selection__choice__remove {
+    color: var(--sec-color) !important;
+  }
+  
+  .select2-container--default .select2-results__option--highlighted {
+    background-color: var(--sec-color);
+    color: white;
+  }
+  .select2-dropdown {
+    border: 2px solid var(--main-color) !important;
+  }

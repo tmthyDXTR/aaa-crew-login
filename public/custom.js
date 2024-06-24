@@ -4,6 +4,41 @@ window.addEventListener("DOMContentLoaded", async () => {
         const response = await fetch("/fetch-user-data");
         const userData = await response.json();
 
+        if (userData.isAdmin === 1) {
+            // Create button element
+            const mailToolButton = document.createElement('div');
+            mailToolButton.classList.add('dos-button');
+            mailToolButton.textContent = 'Mail Tool';
+            mailToolButton.onclick = function() {
+                location.href = '/send-mail-tool';
+            };
+
+            // Get the container and append the button
+            const container = document.getElementById('admin-button-container');
+            container.appendChild(mailToolButton);
+
+            // Create button element
+            const ganttButton = document.createElement('div');
+            ganttButton.classList.add('dos-button');
+            ganttButton.textContent = 'Gantt Tool';
+            ganttButton.onclick = function() {
+                location.href = '/frontendgantt.html';
+            };
+            container.appendChild(ganttButton);
+
+            // Create button element
+            const crewButton = document.createElement('div');
+            crewButton.classList.add('dos-button');
+            crewButton.textContent = 'Meine Crews';
+            crewButton.onclick = function() {
+                location.href = '/crews-overview';
+            };
+            container.appendChild(crewButton);
+
+            // Show the container if it's hidden
+            container.style.display = 'block';
+        }
+
         // Populate form fields with user data
         document.getElementById("vorname").value = userData.vorname;
         document.getElementById("nachname").value = userData.nachname;

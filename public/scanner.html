@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,minimum-scale=1" />
+        <title>AAA TICKET SCANNER</title>
+        <!-- the form awesome library is used to add icons to our form -->
+        <link
+            rel="stylesheet"
+            href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+        />
+        <!-- include the stylesheet file -->
+        <link href="/css/style.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="overlay" id="overlay" style="display: none;"></div>
+        <div class="login-background-image"></div>
+        <div class="scanner-page">
+
+            <div class="form-wrap">
+                <form id="ticket-scan-form">
+                    <!-- <h1 id="ready-status">WARNING NOT READY</h1> -->
+                    <div class="">
+                        <label for="ticket-scan-result">SCAN RESULT</label><br>
+                        <input type="text" name="ticket-scan-result" id="ticket-scan-result" placeholder="KLICK HIER, sonst geht nix"><br>
+            
+                    </div>
+                    <!-- Hidden input field for ticket scan result -->
+                    <!-- <input type="text" name="ticket-scan-result" id="ticket-scan-result" style="display:none"> -->
+                    <!-- Button to focus the hidden input field -->
+                    <button type="button" class="dos-button" id="focus-input-btn">CLICK TO ACTIVATE SCAN !</button><br>
+
+
+                    <label for="ticket-scan-history">SCAN HISTORY</label>
+                    <textarea name="ticket-scan-history" id="ticket-scan-history" style="height: 50vh; overflow-y: scroll;" readonly></textarea>
+                        <!-- Scanned ticket entries will be appended here -->
+                    </div>
+    
+                </form>
+
+            </div>
+           
+            
+
+
+        </div>
+
+        <div class="alert" id="alert-window" style="display:none">
+            <p id="alert-content"></p>
+            <center>
+                <button class="dos-button menu-btn" id="alert-ok-button">
+                    OK NICE
+                </button>
+            </center>
+        </div>
+    </body>
+</html>
+
+<script src=""></script>
+
+<script>
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let isOnFocus = null;
+        let inputBuffer = '';
+        let isScanFinished = false;
+        const scanResultBox = document.getElementById("ticket-scan-result");
+        const scanHistoryBox = document.getElementById("ticket-scan-history");
+        const alertWindow = document.getElementById("alert-window");
+        const alertContent = document.getElementById("alert-content");
+        const readyStatus = document.getElementById("ready-status");
+
+        document.addEventListener('keydown', function(event) {
+
+            if (isScanFinished) {
+                scanResultBox.value = null;
+                isScanFinished = false;
+            }
+            let ticketCode = null;
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                let ticketCode = scanResultBox.value.trim();
+                console.log("scan finished", ticketCode);
+                
+                if (ticketCode) {
+                    // Extract the part after the hyphen
+                    const parts = ticketCode.split('-');
+                    ticketCode = parts.length > 1 ? parts[1] : parts[0];
+
+                    // Send the ticket code to the backend to check and update the check-in time
+                    fetch('/update-ticket-check-in', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ ticket_code: ticketCode })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            if (data.checked_in_time) {
+                                const formattedDate = formatDateTime(data.checked_in_time);
+                                appendTicket(`Error: Ticket already checked in at ${formattedDate}`);
+                            } else {
+                                alert(`Error: ${data.error}`);
+                            }
+                        } else {
+                            appendTicket(`${formatDateTime(data.ticket.ticket_checked_in_time)} - ${data.ticket.ticket_name}-${data.ticket.ticket_security_code}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating ticket check-in:', error);
+                    });
+                }
+                isScanFinished = true;
+            } 
+
+            
+        });
+
+
+        
+
+        function appendTicket(ticket) {
+            scanHistoryBox.value = ticket + '\n'+ scanHistoryBox.value;
+            // Optional: scroll to the bottom of the textarea
+            // scanHistoryBox.scrollTop = scanHistoryBox.scrollHeight;
+        }
+
+        // Function to fetch checked-in tickets and append them to the history box
+        function fetchCheckedInTickets() {
+            fetch('/fetch-checked-in-tickets')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(ticket => {
+                        const formattedDate = formatDateTime(ticket.ticket_checked_in_time);
+
+                        appendTicket(` ${formattedDate} - ${ticket.ticket_name}-${ticket.ticket_security_code}`);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching checked-in tickets:', error);
+                });
+        }
+
+        // Fetch checked-in tickets when the page loads
+        window.onload = fetchCheckedInTickets;
+
+        window.onblur = () => {
+            focusBtn.textContent = "CLICK TO ACTIVATE SCAN !";
+        }
+
+        function showAlert(text) {
+            alertWindow.style = "display:block";
+            alertContent.text = text;
+        }
+
+        // Focus the scan result box when the page visibility changes (e.g., tab change)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                scanResultBox.focus();
+            }
+        });
+
+        // Also focus the scan result box on initial load
+        scanResultBox.focus();
+
+
+
+        // Function to format the datetime string into a readable format
+        function formatDateTime(datetimeStr) {
+            const options = { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            };
+            const date = new Date(datetimeStr);
+            return date.toLocaleString(undefined, options);
+        }
+
+
+
+        const focusBtn = document.getElementById('focus-input-btn');
+
+        // Button click event to focus input field
+        focusBtn.addEventListener('click', function() {
+            scanResultBox.focus();
+            // readyStatus.textContent = 'SCAN READY';
+            focusBtn.textContent = 'SCAN READY';
+        });
+
+        // Event listener to check if user clicks anywhere else
+        document.addEventListener('click', function(event) {
+            if (event.target !== focusBtn && event.target !== scanResultBox) {
+                // readyStatus.textContent = 'WARNING NOT READY';
+                focusBtn.textContent = 'CLICK TO ACTIVATE SCAN !';
+
+            }
+        });
+
+    });
+
+</script>

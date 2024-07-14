@@ -2,262 +2,28 @@ var isHoverActivated = true;
 const overlay = document.getElementById("overlay");
 
 window.addEventListener("DOMContentLoaded", async () => {
-    try {
-        console.log("try to load shift data");
 
-        // Initialize the time schedule with constructed rows
-        $("#schedule").timeSchedule({
-            // schedule start time(HH:ii)
-            startTime: "08:00",
-            // schedule end time(HH:ii)
-            endTime: "31:00",
-            // cell timestamp example 60 minutes
-            widthTime: 60 * 60,
-            // width(px)
-            widthTimeX: 60,
-            draggable: true,
-            resizable: true,
-            resizableLeft: true,
-            timeLineY: 60,
-            onChange: function (node, data) {
-                console.log("onChange", data);
-                // Get all timeline elements
-                adjustRowHeights(61);
-                handleScheduleChange(data);
-            },
-            onInitRow: function (node, data) {
-                // console.log("onInitRow", data);
-            },
-            onClick: function (node, data) {
-                // data cell
-                // openModal();
-                displaySelectedUser(data.data.id);
-                overlay.style = "display:block";
-                displayUsersWithShiftPreference(data.data.ort, checkedValues)
-                .then(() => {
-                    console.log('Users have been displayed.');
-                    console.log('Add buttons to user rows.');
-                    // Get all elements with the class 'user-row'
-                    const userRows = document.querySelectorAll('.user-row');
-
-                    userRows.forEach(userRow => {
-                        const addButton = document.createElement('button');
-                        addButton.textContent = "+";
-                        addButton.classList.add("dos-button");
-
-                        const userId = userRow.getAttribute('data-user-id');
-                        // Add click handler to the button
-                        addButton.addEventListener('click', () => {
-                            addUserToShift(data.data.id, userId);
-                            displaySelectedUser(data.data.id);
-                        });
-                        const removeButton = document.createElement('button');
-                        removeButton.textContent = "-";
-                        removeButton.classList.add("dos-button");
-                        // Add click handler to the button
-                        removeButton.addEventListener('click', () => {
-                            removeUserFromShift(data.data.id, userId);
-                            displaySelectedUser(data.data.id);
-                        });
-
-                        // Append the button to the user row
-                        userRow.appendChild(addButton);
-                        userRow.appendChild(removeButton);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error displaying users:', error);
-                });
-
-                const button = createButton("Delete Shift", function () {
-                    deleteShift(data.data.id);
-                });
-                modalMenu.appendChild(button);
-                // Add add and remove to/from shift buttons for each user
-
-
-                console.log("onClick", data);
-            },
-            onAppendRow: function (node, data) {
-                // console.log("onAppendRow", data);
-            },
-            onAppendSchedule: function (node, data) {
-                // console.log("onAppendSchedule", data);
-            },
-            onScheduleClick: function (node, timeline, time) {
-                // empty cell
-                openModal();
-                // Create a button using the createButton function
-                const button = createButton('Add Shift', function () {
-                    // Call the function to add a shift slot
-                    addShiftSlot(timeline, time);
-                    closeModal();
-                });
-                // Append the button to the modal or any desired parent element
-                modalMenu.appendChild(button);
-
-
-                console.log("onScheduleClick", node, timeline, time);
-                // addShiftSlot(timeline, time);
-            },
-        });
-
-        // Fetch user data
-        const response = await fetch("/fetch-gantt-data");
-        const shiftData = await response.json();
-        // console.log(shiftData);
-
-        // Group shift data by schicht_ort
-        const groupedShiftData = {};
-        shiftData.forEach((slot) => {
-            if (!groupedShiftData[slot.schicht_ort]) {
-                groupedShiftData[slot.schicht_ort] = [];
-            }
-            groupedShiftData[slot.schicht_ort].push(slot);
-        });
-        // console.log(groupedShiftData);
-        let rowIndex = 0;
-
-        Object.keys(groupedShiftData).forEach((schichtOrt) => {
-            const shiftDataArray = groupedShiftData[schichtOrt];
-            // console.log(shiftDataArray);
-            // Process shift data array for the current schicht_ort
-
-            // Initialize an array to hold the rows
-            const rows = [];
-            // Iterate through the sorted data
-            for (const slot of shiftDataArray) {
-                let addedToExistingRow = false;
-
-                // Check if the slot overlaps with any existing row
-                for (const row of rows) {
-                    let overlaps = false;
-
-                    // Check if the slot overlaps with any slot in the current row
-                    for (const existingSlot of row) {
-                        if (
-                            slot.start_time < existingSlot.end_time &&
-                            slot.end_time > existingSlot.start_time
-                        ) {
-                            overlaps = true;
-                            break;
-                        }
-                    }
-
-                    // If the slot doesn't overlap with any slot in the current row, add it to the row
-                    if (!overlaps) {
-                        row.push(slot);
-                        addedToExistingRow = true;
-                        break;
-                    }
-                }
-
-                // If the slot couldn't be added to any existing row, create a new row with the current slot
-                if (!addedToExistingRow) {
-                    rows.push([slot]);
-                }
-            }
-            // console.log(rows);
-
-            // Initialize an array to hold rows data
-            let rowsData = [];
-            rows.forEach((row) => {
-                // Initialize an array to hold schedule data for the current row
-                let scheduleData = [];
-                let shiftTitle = "FUCK";
-                // Format the slot data according to the structure expected by the TimeSchedule plugin
-                row.forEach((slot, slotIndex) => {
-                    // console.log(slot);
-                    shiftTitle = slot.schicht_ort;
-                    // Parse start_time and end_time strings into JavaScript Date objects
-                    let startTime = new Date(slot.start_time);
-                    let endTime = new Date(slot.end_time);
-
-                    // Get formatted start and end time strings as "HH:MM"
-                    let formattedStartTime = startTime.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-                    let formattedEndTime = endTime.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-                    // Check if the formatted time is earlier than "07:00"
-                    if (
-                        timeStringToMinutes(formattedStartTime) <
-                        timeStringToMinutes("07:00")
-                    ) {
-                        // Add 24 hours to the formatted time
-                        // console.log(formattedStartTime);
-                        formattedStartTime = add24Hours(formattedStartTime);
-                        // console.log(formattedStartTime);
-                    }
-
-                    if (
-                        timeStringToMinutes(formattedEndTime) <
-                        timeStringToMinutes("07:00")
-                    ) {
-                        // Add 24 hours to the formatted time
-                        formattedEndTime = add24Hours(formattedEndTime);
-                    }
-
-                    // Format the slot data according to the structure expected by the TimeSchedule plugin
-                    const formattedSlot = {
-                        start: formattedStartTime,
-                        end: formattedEndTime,
-                        text: slot.schicht_ort + "-" + formattedStartTime, // Text for the slot (you can customize this)
-                        data: {
-                            id: slot.id,
-                            tag: slot.schicht_tag,
-                            ort: slot.schicht_ort,
-                        }, // Additional data for the slot if needed
-                    };
-
-                    // Add the formatted slot to the schedule data array
-                    scheduleData.push(formattedSlot);
-                });
-
-                // Add the formatted row data to the rows data array
-                rowsData.push({
-                    [0]: {
-                        // Assuming row indices start from 1
-                        title: shiftTitle,
-                        subtitle: "Description",
-                        schedule: scheduleData,
-                    },
-                });
-            });
-
-            Object.keys(rowsData).forEach((row) => {
-                const fuckIT = rowsData[row][0];
-                console.log(fuckIT);
-                $("#schedule").timeSchedule("addRow", rowIndex++, {
-                    title: fuckIT.title,
-                    schedule: fuckIT.schedule,
-                });
-            });
-
-            // for (const row of rowsData)
-            // {
-            //     console.log(rowsData[row].schedule);
-            //     // $("#schedule").timeSchedule('addRow', timeline, {
-            //     //     title: 'Title Area',
-            //     //     schedule: Object.assign({}, ...row)
-            //     // });
-            // }
-        });
-
-        formatGantChart();
-
-        // Call the function to add the event listeners
-        addHoverListeners();
+    initializeTimeScheduleFr();
+    initializeTimeScheduleSa();
+    initializeTimeScheduleSo();
+    
+    // Call the function to add the event listeners
+    addHoverListeners();
        
-        const showFilledSlotsButton = document.getElementById("show-filled-slots-button");
-        showFilledSlotsButton.addEventListener('click', toggleFilledSlots);
-    } catch {
-        console.log("fetch failed horribly");
-    }
+    const showFilledSlotsButton = document.getElementById("show-filled-slots-button");
+    showFilledSlotsButton.addEventListener('click', toggleFilledSlots);
+
+
+    
 });
+
+
+
+
+
+
+
+
 
 // Get the modal
 const modal = document.getElementById("slotInfo");
@@ -345,6 +111,9 @@ function formatGantChart() {
     // Select all elements with class 'sc_bar'
     var scBars = document.querySelectorAll(".sc_bar");
 
+    
+    
+
     // Iterate through each 'sc_bar' element
     scBars.forEach(function (scBar) {
         // Get the text inside <span class="text">
@@ -391,6 +160,8 @@ function formatGantChart() {
             scBar.style.backgroundColor = colorMap[schichtOrt];
         }
     });
+    
+    
 }
 function adjustRowHeights(px) {
     var timelines = document.querySelectorAll(".timeline");
@@ -729,7 +500,7 @@ async function colorFilledSlots() {
     const response = await fetch('/fetch-all-filled-slots');
     const data = await response.json();
     console.log(data);
-    const scheduleData = $("#schedule").timeSchedule('scheduleData');
+    const scheduleData = $("#schedule-fr").timeSchedule('scheduleData');
     // console.log(scheduleData);
 
     // Create a set of schedule data IDs for quick lookup
@@ -770,3 +541,236 @@ function addHoverListeners() {
     })
 }
 
+
+
+
+
+
+
+async function initializeTimeScheduleFr() {
+    try {
+        console.log("try to load shift data FR");
+
+        initializeTimeSchedule("#schedule-fr", "FR");
+
+        const shiftData = await fetchShiftData("/fetch-gantt-data-fr");
+        const groupedShiftData = groupShiftDataByOrt(shiftData);
+        populateSchedule("#schedule-fr", groupedShiftData);
+
+
+        
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }
+}
+async function initializeTimeScheduleSa() {
+    try {
+        console.log("try to load shift data SA");
+
+        initializeTimeSchedule("#schedule-sa", "SA");
+
+        const shiftData = await fetchShiftData("/fetch-gantt-data-sa");
+        const groupedShiftData = groupShiftDataByOrt(shiftData);
+        populateSchedule("#schedule-sa", groupedShiftData);
+
+
+        
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }
+}
+async function initializeTimeScheduleSo() {
+    try {
+        console.log("try to load shift data SO");
+
+        initializeTimeSchedule("#schedule-so", "SO");
+
+        const shiftData = await fetchShiftData("/fetch-gantt-data-so");
+        const groupedShiftData = groupShiftDataByOrt(shiftData);
+        populateSchedule("#schedule-so", groupedShiftData);
+
+
+        
+    } catch (error) {
+        console.error("Error occurred:", error);
+    }
+}
+
+
+
+function initializeTimeSchedule(selector, day) {
+    $(selector).timeSchedule({
+        startTime: "06:00",
+        endTime: "31:00",
+        widthTime: 60 * 60,
+        widthTimeX: 60,
+        draggable: true,
+        resizable: true,
+        resizableLeft: true,
+        timeLineY: 60,
+        onChange: function (node, data) {
+            console.log("onChange", data);
+            adjustRowHeights(61);
+            handleScheduleChange(data);
+        },
+        onInitRow: function (node, data) {},
+        onClick: function (node, data) {
+            handleScheduleClick(data);
+        },
+        onAppendRow: function (node, data) {},
+        onAppendSchedule: function (node, data) {},
+        onScheduleClick: function (node, timeline, time) {
+            handleEmptyCellClick(timeline, time);
+        },
+    });
+}
+
+async function fetchShiftData(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+    }
+    return response.json();
+}
+
+function groupShiftDataByOrt(shiftData) {
+    const groupedShiftData = {};
+    shiftData.forEach((slot) => {
+        if (!groupedShiftData[slot.schicht_ort]) {
+            groupedShiftData[slot.schicht_ort] = [];
+        }
+        groupedShiftData[slot.schicht_ort].push(slot);
+    });
+    return groupedShiftData;
+}
+
+function populateSchedule(selector, groupedShiftData) {
+    let rowIndex = 0;
+
+    Object.keys(groupedShiftData).forEach((schichtOrt) => {
+        const rows = groupSlotsIntoRows(groupedShiftData[schichtOrt]);
+        const rowsData = formatRowsData(rows);
+
+        rowsData.forEach((rowData) => {
+            $(selector).timeSchedule("addRow", rowIndex++, {
+                title: rowData.title,
+                schedule: rowData.schedule,
+            });
+        });
+    });
+}
+
+function groupSlotsIntoRows(shiftDataArray) {
+    const rows = [];
+    shiftDataArray.forEach((slot) => {
+        let addedToExistingRow = false;
+
+        for (const row of rows) {
+            if (!doesSlotOverlap(slot, row)) {
+                row.push(slot);
+                addedToExistingRow = true;
+                break;
+            }
+        }
+
+        if (!addedToExistingRow) {
+            rows.push([slot]);
+        }
+    });
+    return rows;
+}
+
+function doesSlotOverlap(slot, row) {
+    return row.some(existingSlot => 
+        slot.start_time < existingSlot.end_time && 
+        slot.end_time > existingSlot.start_time
+    );
+}
+
+function formatRowsData(rows) {
+    return rows.map((row) => {
+        const scheduleData = row.map(formatSlot);
+        const title = row[0].schicht_ort;
+        return {
+            title: title,
+            schedule: scheduleData,
+        };
+    });
+}
+
+function formatSlot(slot) {
+    let startTime = new Date(slot.start_time);
+    let endTime = new Date(slot.end_time);
+
+    let formattedStartTime = formatTime(startTime);
+    let formattedEndTime = formatTime(endTime);
+
+    return {
+        start: formattedStartTime,
+        end: formattedEndTime,
+        text: `${slot.schicht_ort}-${formattedStartTime}`,
+        data: {
+            id: slot.id,
+            tag: slot.schicht_tag,
+            ort: slot.schicht_ort,
+        },
+    };
+}
+
+function formatTime(date) {
+    let formattedTime = date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+    if (timeStringToMinutes(formattedTime) < timeStringToMinutes("07:00")) {
+        formattedTime = add24Hours(formattedTime);
+    }
+    return formattedTime;
+}
+
+function handleScheduleClick(data) {
+    displaySelectedUser(data.data.id);
+    overlay.style = "display:block";
+    displayUsersWithShiftPreference(data.data.ort, checkedValues)
+        .then(() => {
+            addButtonsToUserRows(data.data.id);
+        })
+        .catch(error => {
+            console.error('Error displaying users:', error);
+        });
+
+    const button = createButton("Delete Shift", () => deleteShift(data.data.id));
+    modalMenu.appendChild(button);
+    console.log("onClick", data);
+}
+
+function handleEmptyCellClick(timeline, time) {
+    openModal();
+    const button = createButton('Add Shift', () => {
+        addShiftSlot(timeline, time);
+        closeModal();
+    });
+    modalMenu.appendChild(button);
+    console.log("onScheduleClick", timeline, time);
+}
+
+function addButtonsToUserRows(shiftId) {
+    const userRows = document.querySelectorAll('.user-row');
+
+    userRows.forEach(userRow => {
+        const userId = userRow.getAttribute('data-user-id');
+        const addButton = createShiftButton("+", () => addUserToShift(shiftId, userId));
+        const removeButton = createShiftButton("-", () => removeUserFromShift(shiftId, userId));
+
+        userRow.appendChild(addButton);
+        userRow.appendChild(removeButton);
+    });
+}
+
+function createShiftButton(text, onClickHandler) {
+    const button = document.createElement('button');
+    button.textContent = text;
+    button.classList.add("dos-button");
+    button.addEventListener('click', onClickHandler);
+    return button;
+}

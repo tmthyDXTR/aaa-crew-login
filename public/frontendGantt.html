@@ -94,17 +94,20 @@
             cursor: move;
             z-index: 1000;
         }
-        /* Styles for the overlay */
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 500;
-            display: none; /* Hidden by default */
-        }
+    /* Styles for the overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 500;
+        display: none; /* Hidden by default */
+    }
+    /* .container-fr, .container-sa, .container-so {
+      display: none;
+    } */
   </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -124,6 +127,13 @@
   <button id="show-filled-slots-button" class="dos-button">Filled</button>
 
 
+  <!-- <button id="show-do-btn" class="dos-button">DO</button> -->
+  <button id="show-fr-btn" class="dos-button">FR</button>
+  <button id="show-sa-btn" class="dos-button">SA</button>
+  <button id="show-so-btn" class="dos-button">SO</button>
+
+
+
   <input type="checkbox" id="value0" class="dos-checkbox" value=0>
   <label for="value0" class="dos-checkbox-label">0</label>
   <input type="checkbox" id="value1" class="dos-checkbox" value=1>
@@ -133,17 +143,29 @@
 
 
   <h1>Time Table</h1>
-  <div class="container">
-    <div id="schedule">
-
-
-
+  <div class="container-fr"  style="display:block">
+    <div id="schedule-fr">
     </div>
-    <div id="crew-list">
-      <div class="header">Crew List</div>
-      <div id="crew-list-items"></div>
+    
   </div>
-</div>
+
+  <div class="container-sa" >
+    <div id="schedule-sa">
+    </div>
+    
+  </div>
+
+  <div class="container-so" >
+    <div id="schedule-so">
+    </div>
+    
+  </div>
+
+
+  <div id="crew-list">
+    <div class="header">Crew List</div>
+    <div id="crew-list-items"></div>
+  </div>
 <div id="overlay"></div>
 
 </body>
@@ -225,4 +247,45 @@
 
         // Call the function to make #crew-list draggable
         makeDraggable(document.getElementById('crew-list'));
+
+
+
+
+
+    document.getElementById('show-fr-btn').addEventListener('click', function() {
+      document.querySelector('.container-fr').style.display = 'block';
+      document.querySelector('.container-sa').style.display = 'none';
+      document.querySelector('.container-so').style.display = 'none';
+      formatGantChart();
+      // Change the width of the .sc_main_box elements inside the .container-fr
+      document.querySelectorAll('.container-fr .sc_main_box').forEach(element => {
+          element.style.width = '80vw';
+      });
+
+    });
+
+    document.getElementById('show-sa-btn').addEventListener('click', function() {
+      document.querySelector('.container-fr').style.display = 'none';
+      document.querySelector('.container-sa').style.display = 'block';
+      document.querySelector('.container-so').style.display = 'none';
+      formatGantChart();
+      // Change the width of the .sc_main_box elements inside the .container-fr
+      document.querySelectorAll('.container-sa .sc_main_box').forEach(element => {
+          element.style.width = '80vw';
+      });
+
+    });
+
+    document.getElementById('show-so-btn').addEventListener('click', function() {
+      document.querySelector('.container-fr').style.display = 'none';
+      document.querySelector('.container-sa').style.display = 'none';
+      document.querySelector('.container-so').style.display = 'block';
+      formatGantChart();
+
+      // Change the width of the .sc_main_box elements inside the .container-fr
+      document.querySelectorAll('.container-so .sc_main_box').forEach(element => {
+          element.style.width = '80vw';
+      });
+
+    });
 </script>

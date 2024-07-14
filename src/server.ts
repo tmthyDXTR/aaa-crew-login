@@ -52,7 +52,7 @@ app.post("/login", function (request: Request, response: Response)
                 comparePassword(password, hashedPassword)
                     .then((isMatch) =>
                     {
-                        if (isMatch)
+                        if (isMatch && results[0].isAdmin ==! 2)
                         {
                             customSession.loggedin = true;
                             customSession.userEmail = userEmail;
@@ -61,7 +61,15 @@ app.post("/login", function (request: Request, response: Response)
                             customSession.isAdmin = results[0].isAdmin;
                             console.log(results.userName);
                             response.redirect("/home");
-                        } else
+                        } 
+                        // admin=2 for ticket scanning user scanner@aaa pw: scanny
+                        else if (isMatch && results[0].isAdmin === 2) {
+                            customSession.loggedin = true;
+                            customSession.userName = results[0].userName;
+                            customSession.isAdmin = results[0].isAdmin;
+                            response.redirect("/scanner");
+                        }
+                        else
                         {
                             response
                                 .status(400)
@@ -252,6 +260,19 @@ app.get("/home", function (request: Request, response: Response)
     } else
     {
         response.send("Please login to view this page!");
+    }
+});
+
+app.get("/scanner", function (request: Request, response: Response)
+{
+    const customSession: CustomSession = request.session as CustomSession;
+
+    if (customSession.loggedin)
+    {
+        response.sendFile(path.join(__dirname, "/../public/scanner.html")); // Send the home page HTML file containing the form
+    } else
+    {
+        response.send("Please login as 'scanner@aaa' to view this page!");
     }
 });
 
@@ -669,8 +690,10 @@ app.listen(3000, () =>
     }
 });
 
+
+
 // Define route to fetch Gantt data
-app.get("/fetch-gantt-data", (request: Request, response: Response) =>
+app.get("/fetch-gantt-data-fr", (request: Request, response: Response) =>
 {
     console.log("fetch shift data");
     // Your MySQL query
@@ -684,8 +707,7 @@ app.get("/fetch-gantt-data", (request: Request, response: Response) =>
         END,
         schicht_ort ASC,
         start_time ASC,
-        schicht_id ASC
-    LIMIT 50;`;
+        schicht_id ASC;`;
 
     // Execute the query
     connection.query(query, (err, results) =>
@@ -708,6 +730,85 @@ app.get("/fetch-gantt-data", (request: Request, response: Response) =>
         response.json(results);
     });
 });
+
+// Define route to fetch Gantt data
+app.get("/fetch-gantt-data-sa", (request: Request, response: Response) =>
+{
+    console.log("fetch shift data");
+    // Your MySQL query
+    const query = `SELECT * FROM test_schichten WHERE schicht_tag = "SA"
+    ORDER BY 
+        CASE schicht_tag 
+            WHEN 'FR' THEN 1
+            WHEN 'SA' THEN 2
+            WHEN 'SO' THEN 3
+            ELSE 4
+        END,
+        schicht_ort ASC,
+        start_time ASC,
+        schicht_id ASC;`;
+
+    // Execute the query
+    connection.query(query, (err, results) =>
+    {
+
+        if (err)
+        {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // CRAZYYY TIME
+        // // Adjust each slot's start_time and end_time by adding 2 hours
+        // results.forEach((row: { start_time: Date; end_time: Date; }) => {
+        //     row.start_time = new Date(row.start_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        //     row.end_time = new Date(row.end_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        // });
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
+});
+
+// Define route to fetch Gantt data
+app.get("/fetch-gantt-data-so", (request: Request, response: Response) =>
+{
+    console.log("fetch shift data");
+    // Your MySQL query
+    const query = `SELECT * FROM test_schichten WHERE schicht_tag = "SO"
+    ORDER BY 
+        CASE schicht_tag 
+            WHEN 'FR' THEN 1
+            WHEN 'SA' THEN 2
+            WHEN 'SO' THEN 3
+            ELSE 4
+        END,
+        schicht_ort ASC,
+        start_time ASC,
+        schicht_id ASC;`;
+
+    // Execute the query
+    connection.query(query, (err, results) =>
+    {
+
+        if (err)
+        {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        // CRAZYYY TIME
+        // // Adjust each slot's start_time and end_time by adding 2 hours
+        // results.forEach((row: { start_time: Date; end_time: Date; }) => {
+        //     row.start_time = new Date(row.start_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        //     row.end_time = new Date(row.end_time.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours in milliseconds
+        // });
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
+});
+
 
 // Store previous state of the data
 let history: { id: number, start_time: Date, end_time: Date }[] = [];
@@ -835,7 +936,12 @@ app.get('/users-with-shift-preference', (request: Request, response: Response) =
         'ES': 'schicht_parkplatz',
         'FMS': 'schicht_flaschensammeln',
         'HEI': 'schicht_eingangshäuschen',
-
+        'PB': 'schicht_personalbüro',
+        'TG': 'schicht_greencamping',
+        'KA': 'schicht_eingangshäuschen',
+        'NW': 'schicht_nachtwache',
+        'KB': 'schicht_kassenbüro',
+        'KUE': 'schicht_küche',
 
         // Add more mappings as needed
     };
@@ -1094,3 +1200,100 @@ app.get("/fetch-aufbau-crews-data", (request: Request, response: Response) =>
 
 });
 
+
+
+// Define route to fetch Gantt data
+app.get("/fetch-checked-in-tickets", (request: Request, response: Response) =>
+{ 
+    console.log("fetch-checked-in-tickets");
+    // Your MySQL query
+    const query = `SELECT *
+                    FROM aaa_tickets_24
+                    WHERE ticket_checked_in_time IS NOT NULL
+                    ORDER BY ticket_checked_in_time ASC;
+                    `;
+
+    // Execute the query
+    connection.query(query, (err, results) =>
+    {
+
+        if (err)
+        {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        console.log(results);
+        // Send JSON response with query results
+        response.json(results);
+    });
+});
+
+// Endpoint to check and update ticket
+app.post("/update-ticket-check-in", (request: Request, response: Response) => {
+    const { ticket_code } = request.body;
+
+    if (!ticket_code) {
+        response.status(400).json({ error: "Ticket code is required" });
+        return;
+    }
+
+    // Check if the ticket exists and is already checked in
+    const queryCheck = `SELECT ticket_checked_in_time FROM aaa_tickets_24 WHERE ticket_security_code = ?`;
+
+    connection.query(queryCheck, [ticket_code], (err, results) => {
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+
+        if (results.length === 0) {
+            response.status(404).json({ error: "Ticket not found" });
+            return;
+        }
+
+        const ticket = results[0];
+
+        if (ticket.ticket_checked_in_time) {
+            response.status(400).json({ error: "Ticket already checked in", checked_in_time: ticket.ticket_checked_in_time });
+            return;
+        }
+
+        // Update the ticket's check-in time
+        const queryUpdate = `UPDATE aaa_tickets_24 SET ticket_checked_in_time = NOW() WHERE ticket_security_code = ?`;
+
+        connection.query(queryUpdate, [ticket_code], (err, updateResults) => {
+            if (err) {
+                console.error("Error executing MySQL query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+
+            if (updateResults.affectedRows === 0) {
+                response.status(404).json({ error: "Ticket not found" });
+                return;
+            }
+
+            // Retrieve the updated ticket data
+            const queryGetUpdated = `SELECT * FROM aaa_tickets_24 WHERE ticket_security_code = ?`;
+
+            connection.query(queryGetUpdated, [ticket_code], (err, updatedResults) => {
+                if (err) {
+                    console.error("Error executing MySQL query: " + err.stack);
+                    response.status(500).json({ error: "Internal server error" });
+                    return;
+                }
+
+                if (updatedResults.length === 0) {
+                    response.status(404).json({ error: "Ticket not found after update" });
+                    return;
+                }
+
+                const updatedTicket = updatedResults[0];
+                console.log(`Ticket ${ticket_code} checked in at ${updatedTicket.ticket_checked_in_time}`);
+                response.json({ message: "Ticket checked in successfully", ticket: updatedTicket });
+            });
+        });
+    });
+});

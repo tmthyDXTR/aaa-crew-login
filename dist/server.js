@@ -961,3 +961,122 @@ session_1.app.post("/update-ticket-check-in", (request, response) => {
         });
     });
 });
+session_1.app.get("/api/guest-list", (request, response) => {
+    const query = `SELECT * FROM aaa_guest_list_24 ORDER BY guest_list_id DESC`;
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        response.json(results);
+    });
+});
+session_1.app.post("/api/check-in-guest/:id", (request, response) => {
+    const { id } = request.params;
+    if (!id) {
+        response.status(400).json({ error: "Guest ID is required" });
+        return;
+    }
+    // Check if the guest exists and is already checked in
+    const queryCheck = `SELECT guest_list_checkedin FROM aaa_guest_list_24 WHERE guest_list_id = ?`;
+    connection.query(queryCheck, [id], (err, results) => {
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        if (results.length === 0) {
+            response.status(404).json({ error: "Guest not found" });
+            return;
+        }
+        const guest = results[0];
+        if (guest.guest_list_checkedin) {
+            response.status(400).json({ error: "Guest already checked in" });
+            return;
+        }
+        // Update the guest's check-in status
+        const queryUpdate = `UPDATE aaa_guest_list_24 SET guest_list_checkedin = 1 WHERE guest_list_id = ?`;
+        connection.query(queryUpdate, [id], (err, updateResults) => {
+            if (err) {
+                console.error("Error executing MySQL query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+            if (updateResults.affectedRows === 0) {
+                response.status(404).json({ error: "Guest not found" });
+                return;
+            }
+            // Retrieve the updated guest data
+            const queryGetUpdated = `SELECT * FROM aaa_guest_list_24 WHERE guest_list_id = ?`;
+            connection.query(queryGetUpdated, [id], (err, updatedResults) => {
+                if (err) {
+                    console.error("Error executing MySQL query: " + err.stack);
+                    response.status(500).json({ error: "Internal server error" });
+                    return;
+                }
+                if (updatedResults.length === 0) {
+                    response.status(404).json({ error: "Guest not found after update" });
+                    return;
+                }
+                const updatedGuest = updatedResults[0];
+                console.log(`Guest ${id} checked in`);
+                response.json({ success: true, message: "Guest checked in successfully" });
+            });
+        });
+    });
+});
+session_1.app.post("/api/check-out-guest/:id", (request, response) => {
+    const { id } = request.params;
+    if (!id) {
+        response.status(400).json({ error: "Guest ID is required" });
+        return;
+    }
+    // Check if the guest exists and is already checked out
+    const queryCheck = `SELECT guest_list_checkedin FROM aaa_guest_list_24 WHERE guest_list_id = ?`;
+    connection.query(queryCheck, [id], (err, results) => {
+        if (err) {
+            console.error("Error executing MySQL query: " + err.stack);
+            response.status(500).json({ error: "Internal server error" });
+            return;
+        }
+        if (results.length === 0) {
+            response.status(404).json({ error: "Guest not found" });
+            return;
+        }
+        const guest = results[0];
+        if (!guest.guest_list_checkedin) {
+            response.status(400).json({ error: "Guest already checked out" });
+            return;
+        }
+        // Update the guest's check-out status
+        const queryUpdate = `UPDATE aaa_guest_list_24 SET guest_list_checkedin = 0 WHERE guest_list_id = ?`;
+        connection.query(queryUpdate, [id], (err, updateResults) => {
+            if (err) {
+                console.error("Error executing MySQL query: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+            if (updateResults.affectedRows === 0) {
+                response.status(404).json({ error: "Guest not found" });
+                return;
+            }
+            // Retrieve the updated guest data
+            const queryGetUpdated = `SELECT * FROM aaa_guest_list_24 WHERE guest_list_id = ?`;
+            connection.query(queryGetUpdated, [id], (err, updatedResults) => {
+                if (err) {
+                    console.error("Error executing MySQL query: " + err.stack);
+                    response.status(500).json({ error: "Internal server error" });
+                    return;
+                }
+                if (updatedResults.length === 0) {
+                    response.status(404).json({ error: "Guest not found after update" });
+                    return;
+                }
+                const updatedGuest = updatedResults[0];
+                console.log(`Guest ${id} checked out`);
+                response.json({ success: true, message: "Guest checked out successfully" });
+            });
+        });
+    });
+});

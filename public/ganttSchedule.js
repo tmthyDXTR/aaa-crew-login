@@ -523,6 +523,8 @@ function addHoverListeners() {
     // Add a mouseover event listener to each sc_bar element
     bars.forEach(bar => {
         bar.addEventListener('mouseover', function() {
+            console.log(checkedValues);
+
             if (isHoverActivated) {
                 const shiftOrt = this.getAttribute('shiftOrt');
                 const shiftId = this.getAttribute('shiftId');

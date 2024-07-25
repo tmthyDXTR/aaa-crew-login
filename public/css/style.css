@@ -567,3 +567,18 @@ h2 {
   .select2-dropdown {
     border: 2px solid var(--main-color) !important;
   }
+
+  .not-ready {
+    background-color: red;
+    color: white; /* Optional: to make the text more readable */
+}
+
+button.check-in {
+    background-color: green;
+    color: white;
+}
+
+button.check-out {
+    background-color: red;
+    color: white;
+}

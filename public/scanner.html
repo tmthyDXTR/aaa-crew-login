@@ -28,12 +28,22 @@
                     <!-- Hidden input field for ticket scan result -->
                     <!-- <input type="text" name="ticket-scan-result" id="ticket-scan-result" style="display:none"> -->
                     <!-- Button to focus the hidden input field -->
-                    <button type="button" class="dos-button" id="focus-input-btn">CLICK TO ACTIVATE SCAN !</button><br>
+                    <button type="button" class="dos-button not-ready" id="focus-input-btn">CLICK TO ACTIVATE SCAN !</button><br>
 
 
-                    <label for="ticket-scan-history">SCAN HISTORY</label>
-                    <textarea name="ticket-scan-history" id="ticket-scan-history" style="height: 50vh; overflow-y: scroll;" readonly></textarea>
-                        <!-- Scanned ticket entries will be appended here -->
+                    <button type="button" class="dos-button" id="toggle-view-btn">SHOW GUEST LIST</button><br>
+
+
+                    <label for="ticket-scan-history" id="scan-history-label">SCAN HISTORY</label>
+                    <textarea name="ticket-scan-history" id="ticket-scan-history" style="height: 80vh; overflow-y: scroll;" readonly></textarea>
+                        <!-- Scanned ticket entries will be appended here -->   
+                    </div>
+                    
+                    <label for="guest-list" id="guest-list-label" style="display: none;">GUEST LIST</label>
+                    <input type="text" id="search-box" placeholder="Search guests..." oninput="filterGuestList()">
+
+                    <div id="guest-list" style="background-color: black; color: white;">
+                        
                     </div>
     
                 </form>
@@ -59,6 +69,94 @@
 <script src=""></script>
 
 <script>
+    function renderGuestList(data) {
+        const guestListContainer = document.getElementById('guest-list');
+        let tableHTML = '<table style="width: 100%;"><tr><th>Name</th><th>Band</th><th>Type</th><th>Checked In</th><th>Action</th></tr>';
+        data.forEach(guest => {
+            const checkedIn = guest.guest_list_checkedin ? 'Yes' : 'No';
+            const buttonLabel = guest.guest_list_checkedin ? 'Check Out' : 'Check In';
+            tableHTML += `
+                <tr>
+                    <td>${guest.guest_list_name}</td>
+                    <td>${guest.guest_list_bandcomp}</td>
+                    <td>${guest.guest_list_type}</td>
+                    <td>${checkedIn}</td>
+                    <td><button onclick="toggleCheckIn(${guest.guest_list_id}, ${guest.guest_list_checkedin})">${buttonLabel}</button></td>
+                </tr>
+            `;
+        });
+        tableHTML += '</table>';
+        guestListContainer.innerHTML = tableHTML;
+    }
+
+    function filterGuestList() {
+        const searchTerm = document.getElementById('search-box').value.toLowerCase();
+        if (!window.guestListData) return; // Ensure guestListData is defined
+        const filteredData = window.guestListData.filter(guest => 
+            (guest.guest_list_name && guest.guest_list_name.toLowerCase().includes(searchTerm)) ||
+            (guest.guest_list_bandcomp && guest.guest_list_bandcomp.toLowerCase().includes(searchTerm)) ||
+            (guest.guest_list_type && guest.guest_list_type.toLowerCase().includes(searchTerm))
+        );
+        renderGuestList(filteredData);
+    }
+
+
+
+    // Toggle between scan history and guest list
+    document.getElementById('toggle-view-btn').addEventListener('click', function() {
+        const scanHistory = document.getElementById('ticket-scan-history');
+        const guestList = document.getElementById('guest-list');
+        const scanHistoryLabel = document.getElementById('scan-history-label');
+        const guestListLabel = document.getElementById('guest-list-label');
+        const toggleButton = document.getElementById('toggle-view-btn');
+
+        if (scanHistory.style.display === 'none') {
+            scanHistory.style.display = 'block';
+            scanHistoryLabel.style.display = 'block';
+            guestList.style.display = 'none';
+            guestListLabel.style.display = 'none';
+            toggleButton.textContent = 'SHOW GUEST LIST';
+        } else {
+            scanHistory.style.display = 'none';
+            scanHistoryLabel.style.display = 'none';
+            guestList.style.display = 'block';
+            guestListLabel.style.display = 'block';
+            toggleButton.textContent = 'SHOW SCAN HISTORY';
+            fetchGuestList();
+        }
+    });
+
+    function fetchGuestList() {
+        fetch('/api/guest-list')
+            .then(response => response.json())
+            .then(data => {
+                window.guestListData = data; // Store the data globally for filtering
+                renderGuestList(data);
+            })
+            .catch(error => {
+                console.error('Error fetching guest list:', error);
+            });
+    }
+
+    window.toggleCheckIn = function(guestId, isCheckedIn) {
+    const action = isCheckedIn ? 'check-out-guest' : 'check-in-guest';
+    fetch(`/api/${action}/${guestId}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                fetchGuestList();
+            } else {
+                console.error(`Error ${isCheckedIn ? 'checking out' : 'checking in'} guest:`, data.message);
+            }
+        })
+        .catch(error => {
+            console.error(`Error ${isCheckedIn ? 'checking out' : 'checking in'} guest:`, error);
+        });
+};
+
+    fetchGuestList(); // Initial fetch to populate the guest list on page load
+
+
 
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -188,6 +286,7 @@
             scanResultBox.focus();
             // readyStatus.textContent = 'SCAN READY';
             focusBtn.textContent = 'SCAN READY';
+            focusBtn.classList.remove('not-ready');
         });
 
         // Event listener to check if user clicks anywhere else
@@ -195,6 +294,7 @@
             if (event.target !== focusBtn && event.target !== scanResultBox) {
                 // readyStatus.textContent = 'WARNING NOT READY';
                 focusBtn.textContent = 'CLICK TO ACTIVATE SCAN !';
+                focusBtn.classList.add('not-ready');
 
             }
         });

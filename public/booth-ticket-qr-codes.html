@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,minimum-scale=1" />
+    <title>KASSEN TICKETS QR Codes - Print This Page</title>
+    <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .qr-card {
+            border: 4px solid #000;
+            padding: 30px;
+            margin: 20px;
+            background: white;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            min-width: 320px;
+            border-radius: 10px;
+        }
+        
+        .qr-card h2 {
+            margin-top: 0;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .qr-card.fmc {
+            border-color: #27ae60;
+        }
+        
+        .qr-card.foc {
+            border-color: #3498db;
+        }
+        
+        .qr-card.soli {
+            border-color: #e74c3c;
+        }
+        
+        .qr-code {
+            margin: 20px auto;
+        }
+        
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .description {
+            font-size: 14px;
+            color: #666;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+        
+        .instructions {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .print-button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 20px;
+        }
+        
+        .print-button:hover {
+            background: #555;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎫 Kassen Tickets QR Codes</h1>
+    <p class="subtitle">Scan diese QR Codes an der Kasse, um den Ticketverkauf zu registrieren</p>
+    
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">🖨️ Print These QR Codes</button>
+        <p style="color: #666; max-width: 800px; margin: 20px auto;">
+            Print this page and place these QR codes at the ticket booth. 
+            Scan the appropriate code when someone purchases a ticket at the entrance.
+        </p>
+    </div>
+    
+    <div class="container">
+        <div class="qr-card fmc">
+            <h2 style="color: #27ae60;">🏕️ FMC</h2>
+            <div class="price">65 €</div>
+            <div class="qr-code" id="qr-fmc"></div>
+            <div class="description">
+                Festivalticket mit Camping<br>
+                Includes festival entry + camping
+            </div>
+            <div class="instructions">
+                Ticketverkauf: Mit Camping ticket
+            </div>
+        </div>
+        
+        <div class="qr-card foc">
+            <h2 style="color: #3498db;">🎵 FOC</h2>
+            <div class="price">55 €</div>
+            <div class="qr-code" id="qr-foc"></div>
+            <div class="description">
+                Festivalticket ohne Camping<br>
+                Festival entry only
+            </div>
+            <div class="instructions">
+                Ticketverkauf: Ohne Camping ticket
+            </div>
+        </div>
+        
+        <div class="qr-card soli">
+            <h2 style="color: #e74c3c;">❤️ SOLI</h2>
+            <div class="price">100 €</div>
+            <div class="qr-code" id="qr-soli"></div>
+            <div class="description">
+                Soliticket<br>
+                Support ticket + 20€ Verzehrmarken
+            </div>
+            <div class="instructions">
+                Ticketverkauf: Soliticket
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Wait for the page to fully load
+        window.addEventListener('load', function() {
+            try {
+                // Generate QR codes for each ticket type using QRCode.js
+                new QRCode(document.getElementById('qr-fmc'), {
+                    text: 'FMC',
+                    width: 250,
+                    height: 250,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                new QRCode(document.getElementById('qr-foc'), {
+                    text: 'FOC',
+                    width: 250,
+                    height: 250,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                new QRCode(document.getElementById('qr-soli'), {
+                    text: 'SOLI',
+                    width: 250,
+                    height: 250,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                console.log('QR codes generated successfully');
+            } catch (e) {
+                console.error('QR Code generation error:', e);
+                alert('Error generating QR codes: ' + e.message);
+            }
+        });
+    </script>
+</body>
+</html>

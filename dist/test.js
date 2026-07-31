@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertShiftSlots = exports.generateRandomUsers = void 0;
+exports.insertShiftSlots = void 0;
+exports.generateRandomUsers = generateRandomUsers;
 const db_1 = require("./db");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config(); // Load environment variables from .env file
@@ -52,7 +53,6 @@ function generateRandomUsers(x) {
     }
     addUsersToDatabase(users);
 }
-exports.generateRandomUsers = generateRandomUsers;
 const FirstNames = [
     'Anna', 'Max', 'Sophie', 'Paul', 'Maria', 'Felix', 'Lena', 'Jonas', 'Laura', 'Moritz',
     'Emma', 'Lukas', 'Hannah', 'Leon', 'Julia', 'Ben', 'Sarah', 'Tim', 'Lara', 'David'

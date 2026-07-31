@@ -51,7 +51,7 @@ session_1.app.post("/login", function (request, response) {
             const hashedPassword = results[0].userPassword;
             (0, passwordUtils_1.comparePassword)(password, hashedPassword)
                 .then((isMatch) => {
-                if (isMatch && results[0].isAdmin == !2) {
+                if (isMatch && results[0].isAdmin !== 2) {
                     customSession.loggedin = true;
                     customSession.userEmail = userEmail;
                     customSession.userName = results[0].userName;
@@ -84,8 +84,8 @@ session_1.app.post("/login", function (request, response) {
     }
 });
 session_1.app.post("/register", function (request, response) {
-    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d, _e, _f;
         // Handle registration form submission
         const regEmail = (_b = (_a = request.body) === null || _a === void 0 ? void 0 : _a.reg_email) !== null && _b !== void 0 ? _b : "";
         const regPassword = (_d = (_c = request.body) === null || _c === void 0 ? void 0 : _c.reg_password) !== null && _d !== void 0 ? _d : "";
@@ -156,8 +156,8 @@ session_1.app.get("/send-mail-tool", function (request, response) {
     }
 });
 session_1.app.post("/send-email", function (request, response) {
-    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d, _e, _f;
         // Your send mail logic here
         try {
             const emailAddresses = (_b = (_a = request.body) === null || _a === void 0 ? void 0 : _a.email_addresses) !== null && _b !== void 0 ? _b : "";
@@ -203,13 +203,14 @@ session_1.app.get("/home", function (request, response) {
     }
 });
 session_1.app.get("/scanner", function (request, response) {
+    response.sendFile(path_1.default.join(__dirname, "/../public/scanner.html"));
+});
+session_1.app.get("/booth-ticket-qr-codes", function (request, response) {
+    response.sendFile(path_1.default.join(__dirname, "/../public/booth-ticket-qr-codes.html"));
+});
+session_1.app.get("/check-session", function (request, response) {
     const customSession = request.session;
-    if (customSession.loggedin) {
-        response.sendFile(path_1.default.join(__dirname, "/../public/scanner.html")); // Send the home page HTML file containing the form
-    }
-    else {
-        response.send("Please login as 'scanner@aaa' to view this page!");
-    }
+    response.json({ loggedin: customSession.loggedin || false });
 });
 session_1.app.post("/submit-personal-data", storage_1.uploadHandler.single("profile-pic"), submitPersonalData_1.submitPersonalData);
 session_1.app.get("/schichtwuensche", function (request, response) {
@@ -890,7 +891,7 @@ session_1.app.get("/fetch-checked-in-tickets", (request, response) => {
     console.log("fetch-checked-in-tickets");
     // Your MySQL query
     const query = `SELECT *
-                    FROM aaa_tickets_24
+                    FROM aaa_tickets_25
                     WHERE ticket_checked_in_time IS NOT NULL
                     ORDER BY ticket_checked_in_time ASC;
                     `;
@@ -906,6 +907,187 @@ session_1.app.get("/fetch-checked-in-tickets", (request, response) => {
         response.json(results);
     });
 });
+// Endpoint to create booth ticket purchase
+session_1.app.post("/create-booth-ticket", (request, response) => {
+    const { ticket_type } = request.body;
+    if (!ticket_type) {
+        response.status(400).json({ error: "Ticket type is required" });
+        return;
+    }
+    // Map ticket types to names
+    const ticketTypeMap = {
+        'FMC': 'Festivalticket mit Camping',
+        'FOC': 'Festivalticket ohne Camping',
+        'SOLI': 'Soliticket'
+    };
+    // Map ticket types to prices
+    const ticketPriceMap = {
+        'FMC': 65,
+        'FOC': 55,
+        'SOLI': 100
+    };
+    const ticketName = ticketTypeMap[ticket_type];
+    const ticketPrice = ticketPriceMap[ticket_type];
+    if (!ticketName || !ticketPrice) {
+        response.status(400).json({ error: "Invalid ticket type" });
+        return;
+    }
+    // Generate a unique ticket code for booth purchase (max 11 chars)
+    const timestamp = Date.now();
+    const codePrefix = `K${ticket_type}`; // KFMC, KFOC, or KSOLI
+    const remainingLength = 11 - codePrefix.length; // Calculate space for timestamp
+    const timestampShort = timestamp.toString().slice(-remainingLength);
+    const ticketCode = `${codePrefix}${timestampShort}`; // e.g., KFMC1234567 (11 chars)
+    const orderID = `KASSE-${timestamp}`; // Unique order ID for booth sales
+    const paypalID = 'KASSE-CASH'; // Booth sales are cash purchases, not PayPal
+    const ticketHolderEmail = 'kauf@kasse.de';
+    // Insert new booth ticket into database with all required fields
+    const queryInsert = `INSERT INTO aaa_tickets_25 
+        (ticket_security_code, ticket_name, ticket_order_id, ticket_paypal_id, ticket_type, ticket_price, ticket_checked_in_time, ticket_holder_email) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)`;
+    console.log('Attempting to insert booth ticket:', { ticketCode, ticketName, orderID, paypalID, ticket_type, ticketPrice, ticketHolderEmail });
+    connection.query(queryInsert, [ticketCode, ticketName, orderID, paypalID, ticket_type, ticketPrice, ticketHolderEmail], (err, insertResults) => {
+        if (err) {
+            console.error("Error creating booth ticket:", err);
+            console.error("Error details:", {
+                code: err.code,
+                errno: err.errno,
+                sqlMessage: err.sqlMessage,
+                sql: err.sql
+            });
+            // If it's a duplicate key error, generate a new code
+            if (err.code === 'ER_DUP_ENTRY') {
+                const codePrefix = `K${ticket_type}`;
+                const remainingLength = 11 - codePrefix.length - 1; // Leave 1 char for random suffix
+                const timestampShort2 = timestamp.toString().slice(-remainingLength);
+                const randomLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+                const newTicketCode = `${codePrefix}${timestampShort2}${randomLetter}`; // 11 chars
+                connection.query(queryInsert, [newTicketCode, ticketName, orderID, paypalID, ticket_type, ticketPrice, ticketHolderEmail], (retryErr, retryResults) => {
+                    if (retryErr) {
+                        console.error("Retry failed:", retryErr);
+                        response.status(500).json({
+                            error: "Internal server error",
+                            details: retryErr.sqlMessage || retryErr.message
+                        });
+                        return;
+                    }
+                    // Fetch the created ticket
+                    connection.query(`SELECT * FROM aaa_tickets_25 WHERE ticket_security_code = ?`, [newTicketCode], (err, results) => {
+                        if (err) {
+                            console.error("Error fetching retry booth ticket:", err);
+                            response.status(500).json({ error: "Internal server error" });
+                            return;
+                        }
+                        const ticket = results[0];
+                        console.log(`Booth ticket created (retry): ${ticket_type} - ${newTicketCode}`);
+                        response.json({
+                            message: "Booth ticket created successfully",
+                            ticket: ticket,
+                            ticket_type: ticket_type
+                        });
+                    });
+                });
+                return;
+            }
+            response.status(500).json({
+                error: "Internal server error",
+                details: err.sqlMessage || err.message
+            });
+            return;
+        }
+        // Fetch the created ticket
+        const queryGetTicket = `SELECT * FROM aaa_tickets_25 WHERE ticket_security_code = ?`;
+        connection.query(queryGetTicket, [ticketCode], (err, results) => {
+            if (err) {
+                console.error("Error fetching booth ticket: " + err.stack);
+                response.status(500).json({ error: "Internal server error" });
+                return;
+            }
+            const ticket = results[0];
+            console.log(`Booth ticket created: ${ticket_type} - ${ticketCode}`);
+            response.json({
+                message: "Booth ticket created successfully",
+                ticket: ticket,
+                ticket_type: ticket_type
+            });
+        });
+    });
+});
+// Endpoint to delete the last booth ticket entry of a specific type
+session_1.app.post("/delete-last-booth-ticket", (request, response) => {
+    console.log('DELETE ENDPOINT HIT - Request body:', request.body);
+    const { ticket_type } = request.body;
+    console.log('DELETE ENDPOINT - Extracted ticket_type:', ticket_type);
+    if (!ticket_type) {
+        console.log('DELETE ENDPOINT - ERROR: No ticket_type provided');
+        response.status(400).json({ error: "Ticket type is required" });
+        return;
+    }
+    // Validate ticket type
+    const validTypes = ['FMC', 'FOC', 'SOLI'];
+    if (!validTypes.includes(ticket_type)) {
+        response.status(400).json({ error: "Invalid ticket type" });
+        return;
+    }
+    // Build the security code pattern for this ticket type
+    const codePattern = `K${ticket_type}%`; // KFMC%, KFOC%, or KSOLI%
+    console.log('DELETE: Looking for tickets with:', { ticket_type, codePattern });
+    // Find the last booth ticket of this type (created most recently)
+    const queryFindLast = `
+        SELECT * FROM aaa_tickets_25 
+        WHERE ticket_type = ? 
+        AND ticket_security_code LIKE ?
+        AND ticket_order_id LIKE 'KASSE-%'
+        ORDER BY ticket_id DESC 
+        LIMIT 1`;
+    console.log('DELETE: Executing query with params:', [ticket_type, codePattern]);
+    connection.query(queryFindLast, [ticket_type, codePattern], (err, results) => {
+        if (err) {
+            console.error("Error finding last booth ticket:", err);
+            response.status(500).json({
+                error: "Internal server error",
+                details: err.sqlMessage || err.message
+            });
+            return;
+        }
+        console.log('DELETE: Query returned', results.length, 'results');
+        if (results.length > 0) {
+            console.log('DELETE: Found ticket:', results[0]);
+        }
+        if (results.length === 0) {
+            response.status(404).json({
+                error: "No booth ticket found",
+                message: `Kein Kassen-Ticket vom Typ ${ticket_type} gefunden`
+            });
+            return;
+        }
+        const lastTicket = results[0];
+        const ticketIdToDelete = lastTicket.ticket_id;
+        const ticketCode = lastTicket.ticket_security_code;
+        // Delete this ticket
+        const queryDelete = `DELETE FROM aaa_tickets_25 WHERE ticket_id = ?`;
+        connection.query(queryDelete, [ticketIdToDelete], (err, deleteResults) => {
+            if (err) {
+                console.error("Error deleting booth ticket:", err);
+                response.status(500).json({
+                    error: "Internal server error",
+                    details: err.sqlMessage || err.message
+                });
+                return;
+            }
+            if (deleteResults.affectedRows === 0) {
+                response.status(404).json({ error: "Ticket not found or already deleted" });
+                return;
+            }
+            console.log(`Deleted booth ticket: ${ticket_type} - ${ticketCode} (ID: ${ticketIdToDelete})`);
+            response.json({
+                message: "Booth ticket deleted successfully",
+                deleted_ticket: lastTicket,
+                ticket_type: ticket_type
+            });
+        });
+    });
+});
 // Endpoint to check and update ticket
 session_1.app.post("/update-ticket-check-in", (request, response) => {
     const { ticket_code } = request.body;
@@ -914,7 +1096,7 @@ session_1.app.post("/update-ticket-check-in", (request, response) => {
         return;
     }
     // Check if the ticket exists and is already checked in
-    const queryCheck = `SELECT ticket_checked_in_time FROM aaa_tickets_24 WHERE ticket_security_code = ?`;
+    const queryCheck = `SELECT ticket_checked_in_time FROM aaa_tickets_25 WHERE ticket_security_code = ?`;
     connection.query(queryCheck, [ticket_code], (err, results) => {
         if (err) {
             console.error("Error executing MySQL query: " + err.stack);
@@ -931,7 +1113,7 @@ session_1.app.post("/update-ticket-check-in", (request, response) => {
             return;
         }
         // Update the ticket's check-in time
-        const queryUpdate = `UPDATE aaa_tickets_24 SET ticket_checked_in_time = NOW() WHERE ticket_security_code = ?`;
+        const queryUpdate = `UPDATE aaa_tickets_25 SET ticket_checked_in_time = NOW() WHERE ticket_security_code = ?`;
         connection.query(queryUpdate, [ticket_code], (err, updateResults) => {
             if (err) {
                 console.error("Error executing MySQL query: " + err.stack);
@@ -943,7 +1125,7 @@ session_1.app.post("/update-ticket-check-in", (request, response) => {
                 return;
             }
             // Retrieve the updated ticket data
-            const queryGetUpdated = `SELECT * FROM aaa_tickets_24 WHERE ticket_security_code = ?`;
+            const queryGetUpdated = `SELECT * FROM aaa_tickets_25 WHERE ticket_security_code = ?`;
             connection.query(queryGetUpdated, [ticket_code], (err, updatedResults) => {
                 if (err) {
                     console.error("Error executing MySQL query: " + err.stack);

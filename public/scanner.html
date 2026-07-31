@@ -15,20 +15,33 @@
     <body>
         <div class="overlay" id="overlay" style="display: none;"></div>
         <div class="login-background-image"></div>
-        <div class="scanner-page">
+        
+        <!-- Login Required Message -->
+        <div id="login-required" style="display: none; text-align: center; padding: 50px;">
+            <div class="form-wrap">
+                <h1 style="color: white; margin-bottom: 30px;">Please Login to Access Scanner</h1>
+                <a href="/login">
+                    <button class="dos-button" style="padding: 20px 40px; font-size: 18px;">
+                        GO TO LOGIN
+                    </button>
+                </a>
+            </div>
+        </div>
+
+        <div class="scanner-page" id="scanner-content">
 
             <div class="form-wrap">
                 <form id="ticket-scan-form">
                     <!-- <h1 id="ready-status">WARNING NOT READY</h1> -->
                     <div class="">
-                        <label for="ticket-scan-result">SCAN RESULT</label><br>
-                        <input type="text" name="ticket-scan-result" id="ticket-scan-result" placeholder="KLICK HIER, sonst geht nix"><br>
+                        <label for="ticket-scan-result">SCAN RESULT (AUTO-FOCUSED)</label><br>
+                        <input type="text" name="ticket-scan-result" id="ticket-scan-result" placeholder="Ready for scan..."><br>
             
                     </div>
                     <!-- Hidden input field for ticket scan result -->
                     <!-- <input type="text" name="ticket-scan-result" id="ticket-scan-result" style="display:none"> -->
                     <!-- Button to focus the hidden input field -->
-                    <button type="button" class="dos-button not-ready" id="focus-input-btn">CLICK TO ACTIVATE SCAN !</button><br>
+                    <button type="button" class="dos-button not-ready" id="focus-input-btn">SCANNER INITIALIZING...</button><br>
 
 
                     <button type="button" class="dos-button" id="toggle-view-btn">SHOW GUEST LIST</button><br>
@@ -69,6 +82,27 @@
 <script src=""></script>
 
 <script>
+    // Check session status on page load
+    fetch('/check-session')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.loggedin) {
+                // User is not logged in, show login button
+                document.getElementById('login-required').style.display = 'block';
+                document.getElementById('scanner-content').style.display = 'none';
+            } else {
+                // User is logged in, show scanner interface
+                document.getElementById('login-required').style.display = 'none';
+                document.getElementById('scanner-content').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking session:', error);
+            // On error, show login button as safe default
+            document.getElementById('login-required').style.display = 'block';
+            document.getElementById('scanner-content').style.display = 'none';
+        });
+
     function renderGuestList(data) {
         const guestListContainer = document.getElementById('guest-list');
         let tableHTML = '<table style="width: 100%;"><tr><th>Name</th><th>Band</th><th>Type</th><th>Checked In</th><th>Action</th></tr>';
@@ -169,47 +203,146 @@
         const alertContent = document.getElementById("alert-content");
         const readyStatus = document.getElementById("ready-status");
 
+        // Automatically refocus input when it loses focus (unless clicking on buttons/table)
+        scanResultBox.addEventListener('blur', function() {
+            setTimeout(() => {
+                const activeElement = document.activeElement;
+                // Don't refocus if user is clicking buttons, table elements, or input fields
+                if (activeElement.tagName !== 'BUTTON' && 
+                    activeElement.tagName !== 'INPUT' && 
+                    activeElement.tagName !== 'A' &&
+                    !activeElement.closest('table')) {
+                    scanResultBox.focus();
+                }
+            }, 100);
+        });
+
+        // Listen for all keydown events at document level
         document.addEventListener('keydown', function(event) {
+            // Ignore keypresses when user is typing in search box or other inputs
+            if (event.target.id === 'search-box' || 
+                (event.target.tagName === 'INPUT' && event.target.id !== 'ticket-scan-result')) {
+                return;
+            }
+
+            // Ensure the scan input stays focused for barcode scanner input
+            if (document.activeElement !== scanResultBox && 
+                event.target.tagName !== 'INPUT' && 
+                event.target.tagName !== 'BUTTON') {
+                scanResultBox.focus();
+            }
 
             if (isScanFinished) {
-                scanResultBox.value = null;
+                scanResultBox.value = '';
                 isScanFinished = false;
             }
-            let ticketCode = null;
+            
             if (event.key === 'Enter') {
                 event.preventDefault();
                 let ticketCode = scanResultBox.value.trim();
-                console.log("scan finished", ticketCode);
+                console.log("Scanned code:", ticketCode);
                 
                 if (ticketCode) {
-                    // Extract the part after the hyphen
-                    const parts = ticketCode.split('-');
-                    ticketCode = parts.length > 1 ? parts[1] : parts[0];
-
-                    // Send the ticket code to the backend to check and update the check-in time
-                    fetch('/update-ticket-check-in', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ ticket_code: ticketCode })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            if (data.checked_in_time) {
-                                const formattedDate = formatDateTime(data.checked_in_time);
-                                appendTicket(`Error: Ticket already checked in at ${formattedDate}`);
-                            } else {
-                                alert(`Error: ${data.error}`);
-                            }
+                    // Check if this is a KORREKTUR code (delete last entry)
+                    // Accept both KORREKTUR-FMC and KORREKTUR/FMC formats
+                    if (ticketCode.startsWith('KORREKTUR-') || ticketCode.startsWith('KORREKTUR/')) {
+                        const ticketType = ticketCode.replace('KORREKTUR-', '').replace('KORREKTUR/', ''); // Extract FMC, FOC, or SOLI
+                        
+                        if (confirm(`⚠️ ACHTUNG: Letztes ${ticketType}-Ticket wirklich löschen?`)) {
+                            fetch('/delete-last-booth-ticket', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ ticket_type: ticketType })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error;
+                                    alert(`Error: ${errorMsg}`);
+                                    console.error('Delete error:', data);
+                                } else {
+                                    const deletedCode = data.deleted_ticket.ticket_security_code;
+                                    const deletedTime = formatDateTime(data.deleted_ticket.ticket_checked_in_time);
+                                    appendTicket(`🗑️ GELÖSCHT: ${deletedCode} (${ticketType}) - ${deletedTime}`);
+                                    alert(`✓ Letztes ${ticketType}-Ticket wurde gelöscht`);
+                                }
+                                isScanFinished = true;
+                            })
+                            .catch(error => {
+                                console.error('Error deleting booth ticket:', error);
+                                alert('Fehler beim Löschen des Tickets');
+                                isScanFinished = true;
+                            });
                         } else {
-                            appendTicket(`${formatDateTime(data.ticket.ticket_checked_in_time)} - ${data.ticket.ticket_name}-${data.ticket.ticket_security_code}`);
+                            isScanFinished = true;
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error updating ticket check-in:', error);
-                    });
+                    }
+                    // Check if this is a booth ticket type (FMC, FOC, SOLI)
+                    else if (ticketCode === 'FMC' || ticketCode === 'FOC' || ticketCode === 'SOLI') {
+                        // Create a new booth ticket entry
+                        fetch('/create-booth-ticket', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ ticket_type: ticketCode })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error;
+                                alert(`Error: ${errorMsg}`);
+                                console.error('Booth ticket error:', data);
+                            } else {
+                                appendTicket(`${formatDateTime(data.ticket.ticket_checked_in_time)} - KASSE ${data.ticket_type} - ${data.ticket.ticket_name}`);
+                            }
+                            isScanFinished = true;
+                        })
+                        .catch(error => {
+                            console.error('Error creating booth ticket:', error);
+                            isScanFinished = true;
+                        });
+                    } else {
+                        // Check if this is a booth ticket code (starts with K and has ticket type)
+                        if (ticketCode.startsWith('K') && (ticketCode.startsWith('KFMC') || ticketCode.startsWith('KFOC') || ticketCode.startsWith('KSOLI'))) {
+                            // This is a booth ticket that's already been checked in
+                            appendTicket(`⚠️ Kassen-Ticket bereits eingecheckt: ${ticketCode}`);
+                            alert('Achtung: Dies ist ein Kassen-Ticket, das bereits beim Verkauf eingecheckt wurde!');
+                            isScanFinished = true;
+                        } else {
+                            // Normal ticket processing
+                            // Extract the part after the hyphen
+                            const parts = ticketCode.split('-');
+                            ticketCode = parts.length > 1 ? parts[1] : parts[0];
+
+                        // Send the ticket code to the backend to check and update the check-in time
+                        fetch('/update-ticket-check-in', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ ticket_code: ticketCode })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                if (data.checked_in_time) {
+                                    const formattedDate = formatDateTime(data.checked_in_time);
+                                    appendTicket(`Error: Ticket already checked in at ${formattedDate}`);
+                                } else {
+                                    alert(`Error: ${data.error}`);
+                                }
+                            } else {
+                                appendTicket(`${formatDateTime(data.ticket.ticket_checked_in_time)} - ${data.ticket.ticket_name}-${data.ticket.ticket_security_code}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating ticket check-in:', error);
+                        });
+                        }
+                    }
                 }
                 isScanFinished = true;
             } 
@@ -228,13 +361,29 @@
 
         // Function to fetch checked-in tickets and append them to the history box
         function fetchCheckedInTickets() {
+            // Clear the history box first to prevent duplicates on page refresh
+            scanHistoryBox.value = '';
+            
             fetch('/fetch-checked-in-tickets')
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(ticket => {
                         const formattedDate = formatDateTime(ticket.ticket_checked_in_time);
-
-                        appendTicket(` ${formattedDate} - ${ticket.ticket_name}-${ticket.ticket_security_code}`);
+                        
+                        // Check if this is a booth ticket (security code starts with K and matches KFMC/KFOC/KSOLI)
+                        const isBoothTicket = ticket.ticket_security_code && 
+                                             ticket.ticket_security_code.startsWith('K') && 
+                                             (ticket.ticket_security_code.startsWith('KFMC') || 
+                                              ticket.ticket_security_code.startsWith('KFOC') || 
+                                              ticket.ticket_security_code.startsWith('KSOLI'));
+                        
+                        if (isBoothTicket) {
+                            // Format booth tickets consistently: "time - KASSE type - name"
+                            appendTicket(` ${formattedDate} - KASSE ${ticket.ticket_type} - ${ticket.ticket_name}`);
+                        } else {
+                            // Format regular tickets: "time - name-code"
+                            appendTicket(` ${formattedDate} - ${ticket.ticket_name}-${ticket.ticket_security_code}`);
+                        }
                     });
                 })
                 .catch(error => {
@@ -244,10 +393,6 @@
 
         // Fetch checked-in tickets when the page loads
         window.onload = fetchCheckedInTickets;
-
-        window.onblur = () => {
-            focusBtn.textContent = "CLICK TO ACTIVATE SCAN !";
-        }
 
         function showAlert(text) {
             alertWindow.style = "display:block";
@@ -261,43 +406,93 @@
             }
         });
 
-        // Also focus the scan result box on initial load
+        // Focus on initial load and keep it focused
         scanResultBox.focus();
+        
+        // Periodically check and refocus if needed (extra safety)
+        setInterval(() => {
+            const activeElement = document.activeElement;
+            const focusBtn = document.getElementById('focus-input-btn');
+            
+            if (activeElement.tagName !== 'BUTTON' && 
+                activeElement.tagName !== 'INPUT' && 
+                activeElement.tagName !== 'A' &&
+                !activeElement.closest('table') &&
+                activeElement !== scanResultBox) {
+                scanResultBox.focus();
+            }
+            
+            // Update button status based on current focus
+            if (document.activeElement === scanResultBox) {
+                focusBtn.textContent = 'SCANNER ACTIVE';
+                focusBtn.classList.remove('not-ready');
+            } else {
+                focusBtn.textContent = 'SCANNER NOT ACTIVE';
+                focusBtn.classList.add('not-ready');
+            }
+        }, 1000);
 
 
 
         // Function to format the datetime string into a readable format
         function formatDateTime(datetimeStr) {
+            console.log('Original datetime string:', datetimeStr);
+            
+            // Parse datetime components manually to avoid timezone issues
+            // DB stores Berlin time, so we parse it as-is without conversion
+            const parts = datetimeStr.replace('T', ' ').split(/[- :]/);
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1; // months are 0-indexed
+            const day = parseInt(parts[2]);
+            const hour = parseInt(parts[3]);
+            const minute = parseInt(parts[4]);
+            const second = parseInt(parts[5]);
+            
+            // Create date in local timezone (which should be Berlin)
+            const date = new Date(year, month, day, hour, minute, second);
+            
             const options = { 
                 hour: '2-digit', 
                 minute: '2-digit', 
-                second: '2-digit' 
+                second: '2-digit'
             };
-            const date = new Date(datetimeStr);
-            return date.toLocaleString(undefined, options);
+            
+            console.log('Parsed date:', date);
+            const formatted = date.toLocaleString('de-DE', options);
+            console.log('Formatted date:', formatted);
+            return formatted;
         }
 
 
 
         const focusBtn = document.getElementById('focus-input-btn');
 
-        // Button click event to focus input field
-        focusBtn.addEventListener('click', function() {
-            scanResultBox.focus();
-            // readyStatus.textContent = 'SCAN READY';
-            focusBtn.textContent = 'SCAN READY';
+        // Update button status based on input focus
+        scanResultBox.addEventListener('focus', function() {
+            focusBtn.textContent = 'SCANNER ACTIVE';
             focusBtn.classList.remove('not-ready');
         });
 
-        // Event listener to check if user clicks anywhere else
-        document.addEventListener('click', function(event) {
-            if (event.target !== focusBtn && event.target !== scanResultBox) {
-                // readyStatus.textContent = 'WARNING NOT READY';
-                focusBtn.textContent = 'CLICK TO ACTIVATE SCAN !';
-                focusBtn.classList.add('not-ready');
-
-            }
+        scanResultBox.addEventListener('blur', function() {
+            focusBtn.textContent = 'SCANNER NOT ACTIVE';
+            focusBtn.classList.add('not-ready');
         });
+
+        // Button click event to focus input field
+        focusBtn.addEventListener('click', function() {
+            scanResultBox.focus();
+        });
+
+        // Auto-set initial button status
+        setTimeout(() => {
+            if (document.activeElement === scanResultBox) {
+                focusBtn.textContent = 'SCANNER ACTIVE';
+                focusBtn.classList.remove('not-ready');
+            } else {
+                focusBtn.textContent = 'SCANNER NOT ACTIVE';
+                focusBtn.classList.add('not-ready');
+            }
+        }, 500);
 
     });
 

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePassword = void 0;
+exports.updatePassword = updatePassword;
 // Define a function to update the user's password
 const mysql_1 = __importDefault(require("mysql"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -40,4 +40,3 @@ function updatePassword(userId, hashedPassword, response) {
         });
     });
 }
-exports.updatePassword = updatePassword;

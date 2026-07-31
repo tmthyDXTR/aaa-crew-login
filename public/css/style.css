@@ -460,6 +460,12 @@ h2 {
   
   }
 
+  /* Wider form for scanner page */
+  .scanner-page .form-wrap {
+    width: 75vw;
+    max-width: none;
+  }
+
 
   /* Basic table styling for readability */
 #aufbauTable {

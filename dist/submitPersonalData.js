@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.submitPersonalData = void 0;
+exports.submitPersonalData = submitPersonalData;
 const db_1 = require("./db");
 // Create sql db connection
 const connection = (0, db_1.createDBConnection)();
@@ -98,4 +98,3 @@ function submitPersonalData(request, response) {
         response.redirect("/schichtwuensche");
     });
 }
-exports.submitPersonalData = submitPersonalData;

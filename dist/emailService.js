@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendMail = void 0;
+exports.sendMail = sendMail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
 // Load environment variables from .env file
@@ -32,8 +32,8 @@ const transporter = nodemailer_1.default.createTransport({
         pass: process.env.EMAIL_PERSONAL_PASS,
     },
 });
-function sendMail({ to, subject, text }) {
-    return __awaiter(this, void 0, void 0, function* () {
+function sendMail(_a) {
+    return __awaiter(this, arguments, void 0, function* ({ to, subject, text }) {
         try {
             // Convert the 'to' string into an array of email addresses
             const bccList = to.split(/[\s,]+/).filter(email => email.length > 0);
@@ -55,4 +55,3 @@ function sendMail({ to, subject, text }) {
         }
     });
 }
-exports.sendMail = sendMail;

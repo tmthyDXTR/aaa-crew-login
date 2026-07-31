@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyToken = void 0;
+exports.verifyToken = verifyToken;
 const db_1 = require("./db");
 // Create sql db connection
 const connection = (0, db_1.createDBConnection)();
@@ -27,4 +27,3 @@ function verifyToken(token) {
         });
     });
 }
-exports.verifyToken = verifyToken;

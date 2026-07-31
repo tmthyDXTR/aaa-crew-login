@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.submitShiftPreferences = void 0;
+exports.submitShiftPreferences = submitShiftPreferences;
 const db_1 = require("./db");
 // Create sql db connection
 const connection = (0, db_1.createDBConnection)();
@@ -77,4 +77,3 @@ function submitShiftPreferences(request, response) {
         response.redirect("/aufbauwoche");
     });
 }
-exports.submitShiftPreferences = submitShiftPreferences;
